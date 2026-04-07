@@ -58,7 +58,23 @@ TOOLS=comma,separated,tools
 | `USERNAME` | Yes | Your registered username |
 | `API_KEY` | Yes | The key returned by `/api/register` |
 | `TEAM` | No | Your team name (default: `default`) |
-| `TOOLS` | No | Comma-separated list of tools you use (e.g. `superpowers,arsenal`) |
+| `TOOLS` | No | Comma-separated skills, integrations, and projects you use (see below) |
+
+#### Tools
+
+The `TOOLS` field tags your profile with the AI coding skills, integrations, and projects you use. These show as badges on the leaderboard and feed the "Most Popular Projects" ranking.
+
+Some examples:
+
+| Tool | Description |
+|------|-------------|
+| [superpowers](https://github.com/nickarail/superpowers) | Claude Code skills for TDD, planning, debugging |
+| [arsenal](https://github.com/nickarail/arsenal) | Extended Claude Code skill set |
+| [paperclip](https://github.com/paperclipai/paperclip) | AI coding agent framework |
+| [oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) | Codex CLI enhancements |
+| [cmux](https://cmux.com/) | AI coding multiplexer |
+
+Add whatever you actually use — the leaderboard tracks what's popular.
 
 ### 5. Test it
 
