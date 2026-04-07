@@ -91,12 +91,24 @@ You should see output like:
 [2026-04-07T18:02:26.837Z] Server responded 200: {"ok":true,"rows":21}
 ```
 
-### 6. Install the auto-reporter
+### 6. Install the background service
 
-This sets up a background service that reports every 2 hours (launchd on macOS, systemd on Linux):
+Run this once — it installs a background service that reports automatically every 2 hours. No cron job needed.
 
 ```
-node reporter/install.js
+npm run install-service
+```
+
+This uses **launchd** on macOS and **systemd** on Linux. It starts immediately and survives reboots.
+
+You can verify it's running:
+
+```bash
+# macOS
+launchctl list | grep token-tracking
+
+# Linux
+systemctl --user status token-tracking-reporter.timer
 ```
 
 ## Dashboard
@@ -114,8 +126,13 @@ Both are merged and POSTed to the Deepspring server with your API key. The backg
 
 ## Logs
 
-- **macOS**: `~/Library/Logs/token-tracking-reporter.log`
-- **Linux**: `journalctl --user -u token-tracking-reporter`
+```bash
+# macOS
+cat ~/Library/Logs/token-tracking-reporter.log
+
+# Linux
+journalctl --user -u token-tracking-reporter
+```
 
 ## Manual report
 
