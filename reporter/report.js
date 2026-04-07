@@ -28,7 +28,7 @@ if (!USERNAME || !API_KEY) {
 
 // 7 days ago in YYYYMMDD format
 const since = new Date();
-since.setDate(since.getDate() - 7);
+since.setDate(since.getDate() - 28);
 const sinceStr =
   since.getFullYear().toString() +
   (since.getMonth() + 1).toString().padStart(2, "0") +
