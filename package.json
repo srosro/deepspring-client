@@ -1,0 +1,12 @@
+{
+  "name": "deepspring-client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "report": "node reporter/report.js",
+    "install-service": "node reporter/install.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0"
+  }
+}
