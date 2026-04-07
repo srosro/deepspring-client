@@ -1,55 +1,108 @@
 # Deepspring Client
 
-Reports your Claude Code token usage to the Deepspring server.
+Reports your Claude Code and Codex token usage to the [Deepspring](https://www.deepspring.ai) leaderboard.
 
-## Quick Start
+## Setup
 
-1. **Install ccusage** (if you haven't already):
-   ```
-   npm install -g ccusage
-   ```
+### 1. Install ccusage
 
-2. **Clone and install**:
-   ```
-   git clone git@github.com:srosro/deepspring-client.git
-   cd deepspring-client
-   npm install
-   ```
+[ccusage](https://github.com/syumarin/ccusage) reads your local Claude Code usage data.
 
-3. **Create your `.env`**:
-   ```
-   USERNAME=your-name
-   TEAM=plow
-   SERVER_URL=http://slowdown:3847
-   ```
+```
+npm install -g ccusage
+```
 
-4. **Install the auto-reporter** (runs every 2 hours):
-   ```
-   node reporter/install.js
-   ```
+### 2. Clone and install
 
-5. **Verify it works**:
-   ```
-   npm run report
-   ```
+```
+git clone git@github.com:srosro/deepspring-client.git
+cd deepspring-client
+npm install
+```
 
-## Dashboard
+### 3. Register your username
 
-View the team leaderboard at: **http://slowdown:3847**
+Pick a unique username. First come, first served — once registered, only you can submit data for that name.
 
-## How It Works
+```
+curl -s -X POST https://www.deepspring.ai/api/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"YOUR_NAME"}'
+```
 
-The reporter runs `ccusage --json --offline` to collect your local Claude Code usage, then POSTs it to the Deepspring server. A background service (launchd on macOS, systemd on Linux) runs this every 2 hours automatically.
+This returns your API key:
 
-## Manual Report
+```json
+{"ok":true,"key":"abc123..."}
+```
 
-To push your usage data immediately:
+Save this key. It cannot be retrieved later.
+
+### 4. Configure `.env`
+
+Copy the example and fill in your values:
+
+```
+cp .env.example .env
+```
+
+```
+USERNAME=your-name
+TEAM=your-team
+API_KEY=your-api-key-from-step-3
+TOOLS=comma,separated,tools
+```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `USERNAME` | Yes | Your registered username |
+| `API_KEY` | Yes | The key returned by `/api/register` |
+| `TEAM` | No | Your team name (default: `default`) |
+| `TOOLS` | No | Comma-separated list of tools you use (e.g. `superpowers,arsenal`) |
+
+### 5. Test it
 
 ```
 npm run report
 ```
 
+You should see output like:
+
+```
+[2026-04-07T18:02:23.981Z] Collecting usage since 20260331 for your-name (team: your-team)
+  Claude: 8 days
+  Codex: 2 days
+[2026-04-07T18:02:26.837Z] Server responded 200: {"ok":true,"rows":21}
+```
+
+### 6. Install the auto-reporter
+
+This sets up a background service that reports every 2 hours (launchd on macOS, systemd on Linux):
+
+```
+node reporter/install.js
+```
+
+## Dashboard
+
+View the leaderboard at **https://www.deepspring.ai**
+
+## How it works
+
+The reporter collects token usage from two sources:
+
+- **Claude Code** via [ccusage](https://github.com/syumarin/ccusage) (`ccusage --json --offline`)
+- **Codex CLI** from `~/.codex/state_5.sqlite` (auto-detected, skipped if not present)
+
+Both are merged and POSTed to the Deepspring server with your API key. The background service runs this automatically every 2 hours.
+
 ## Logs
 
 - **macOS**: `~/Library/Logs/token-tracking-reporter.log`
 - **Linux**: `journalctl --user -u token-tracking-reporter`
+
+## Manual report
+
+```
+npm run report
+```

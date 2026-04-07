@@ -8,8 +8,10 @@ const { collectCodexUsage } = require("./codex");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const USERNAME = process.env.USERNAME;
-const SERVER_URL = process.env.SERVER_URL;
+const SERVER_URL = process.env.SERVER_URL || "https://www.deepspring.ai";
 const TEAM = process.env.TEAM || "default";
+const API_KEY = process.env.API_KEY;
+const TOOLS = process.env.TOOLS || "";
 
 // Resolve ccusage binary — launchd/systemd don't inherit the user's shell PATH
 const CCUSAGE_CANDIDATES = [
@@ -19,8 +21,8 @@ const CCUSAGE_CANDIDATES = [
 ];
 const CCUSAGE = CCUSAGE_CANDIDATES.find((p) => fs.existsSync(p)) || "ccusage";
 
-if (!USERNAME || !SERVER_URL) {
-  console.error("USERNAME and SERVER_URL must be set in .env");
+if (!USERNAME || !API_KEY) {
+  console.error("USERNAME and API_KEY must be set in .env");
   process.exit(1);
 }
 
@@ -80,7 +82,7 @@ if (mergedDaily.length === 0) {
   process.exit(0);
 }
 
-const payload = JSON.stringify({ username: USERNAME, team: TEAM, data: mergedDaily });
+const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, data: mergedDaily });
 
 const url = new URL("/api/usage", SERVER_URL);
 const transport = url.protocol === "https:" ? https : http;
@@ -92,6 +94,7 @@ const req = transport.request(
     headers: {
       "Content-Type": "application/json",
       "Content-Length": Buffer.byteLength(payload),
+      "Authorization": `Bearer ${API_KEY}`,
     },
   },
   (res) => {
