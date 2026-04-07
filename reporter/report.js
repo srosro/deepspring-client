@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const https = require("node:https");
+const { collectCodexUsage } = require("./codex");
 
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
@@ -33,19 +34,53 @@ const sinceStr =
 
 console.log(`[${new Date().toISOString()}] Collecting usage since ${sinceStr} for ${USERNAME} (team: ${TEAM})`);
 
-let raw;
+// Collect Claude usage
+let claudeDaily = [];
 try {
-  raw = execFileSync(CCUSAGE, ["--json", "--offline", "--since", sinceStr], {
+  const raw = execFileSync(CCUSAGE, ["--json", "--offline", "--since", sinceStr], {
     encoding: "utf-8",
     timeout: 30000,
   });
+  const parsed = JSON.parse(raw);
+  claudeDaily = parsed.daily || [];
+  // Tag each breakdown with source
+  for (const day of claudeDaily) {
+    for (const m of day.modelBreakdowns) {
+      m.source = "claude";
+    }
+  }
+  console.log(`  Claude: ${claudeDaily.length} days`);
 } catch (err) {
-  console.error("ccusage failed:", err.message);
-  process.exit(1);
+  console.error("  ccusage failed (continuing with codex only):", err.message);
 }
 
-const parsed = JSON.parse(raw);
-const payload = JSON.stringify({ username: USERNAME, team: TEAM, data: parsed.daily });
+// Collect Codex usage
+let codexDaily = [];
+try {
+  codexDaily = collectCodexUsage(sinceStr);
+  console.log(`  Codex: ${codexDaily.length} days`);
+} catch (err) {
+  console.error("  Codex collection failed (continuing with claude only):", err.message);
+}
+
+// Merge: combine days that appear in both
+const dayMap = {};
+for (const day of claudeDaily) {
+  dayMap[day.date] = dayMap[day.date] || { date: day.date, modelBreakdowns: [] };
+  dayMap[day.date].modelBreakdowns.push(...day.modelBreakdowns);
+}
+for (const day of codexDaily) {
+  dayMap[day.date] = dayMap[day.date] || { date: day.date, modelBreakdowns: [] };
+  dayMap[day.date].modelBreakdowns.push(...day.modelBreakdowns);
+}
+const mergedDaily = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date));
+
+if (mergedDaily.length === 0) {
+  console.log("No usage data to report.");
+  process.exit(0);
+}
+
+const payload = JSON.stringify({ username: USERNAME, team: TEAM, data: mergedDaily });
 
 const url = new URL("/api/usage", SERVER_URL);
 const transport = url.protocol === "https:" ? https : http;
