@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const https = require("node:https");
+const os = require("node:os");
 const { collectCodexUsage } = require("./codex");
 
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
@@ -82,7 +83,7 @@ if (mergedDaily.length === 0) {
   process.exit(0);
 }
 
-const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, data: mergedDaily });
+const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, client_id: os.hostname(), data: mergedDaily });
 
 const url = new URL("/api/usage", SERVER_URL);
 const transport = url.protocol === "https:" ? https : http;
