@@ -1,6 +1,6 @@
-# Deepspring Client
+# Tokenmaxxing Client
 
-Reports your Claude Code and Codex token usage to the [Deepspring](https://www.deepspring.ai) leaderboard. Each user gets a shareable profile page at `deepspring.ai/user/YOUR_NAME`.
+Reports your Claude Code and Codex token usage to the [Tokenmaxxing Leaderboard](https://tokenmaxxing.odio.dev). Each user gets a shareable profile page at `tokenmaxxing.odio.dev/user/YOUR_NAME`.
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ npm install
 Pick a unique username and provide your email. First come, first served.
 
 ```
-curl -s -X POST https://www.deepspring.ai/api/register \
+curl -s -X POST https://tokenmaxxing.odio.dev/api/register \
   -H 'Content-Type: application/json' \
   -d '{"username":"YOUR_NAME", "email":"you@example.com"}'
 ```
@@ -136,11 +136,11 @@ You can always do a manual full re-sync by temporarily setting `REPORT_DAYS=28` 
 
 The client supports reporting from multiple machines under the same username. Each machine gets its own `CLIENT_ID` (auto-generated on first run), and the server tracks data per-machine. Setup on each machine is identical — just use the same `USERNAME`, `API_KEY`, and `TEAM` in `.env`.
 
-Your [profile page](https://www.deepspring.ai) shows how many machines you're reporting from.
+Your [profile page](https://tokenmaxxing.odio.dev) shows how many machines you're reporting from.
 
 ## Profile Page
 
-Each user gets a shareable profile at `https://www.deepspring.ai/user/YOUR_NAME` showing:
+Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_NAME` showing:
 
 - Token usage stats (28-day and all-time)
 - Claude vs Codex cost breakdown
@@ -195,7 +195,7 @@ The reporter collects token usage from two sources:
 - **Claude Code** via [ccusage](https://github.com/syumarin/ccusage) (`ccusage --json --offline`)
 - **Codex CLI** from `~/.codex/state_*.sqlite` (auto-detected, skipped if not present)
 
-Both are merged and POSTed to the Deepspring server with your API key. Each report replaces previous data for the same machine and date range, so re-syncs are safe and idempotent.
+Both are merged and POSTed to the Tokenmaxxing server with your API key. Each report replaces previous data for the same machine and date range, so re-syncs are safe and idempotent.
 
 ## Logs
 

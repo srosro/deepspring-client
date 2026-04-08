@@ -11,7 +11,7 @@ const { mergeDailyUsage } = require("./merge");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const USERNAME = process.env.USERNAME;
-const SERVER_URL = process.env.SERVER_URL || "https://www.deepspring.ai";
+const SERVER_URL = process.env.SERVER_URL || "https://tokenmaxxing.odio.dev";
 const TEAM = process.env.TEAM || "default";
 const API_KEY = process.env.API_KEY;
 const TOOLS = process.env.TOOLS || "";
