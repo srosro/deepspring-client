@@ -176,14 +176,14 @@ describe("collectCodexUsage", () => {
     assert.equal(apr6.modelBreakdowns.length, 1);
   });
 
-  it("estimates cost using model pricing", () => {
+  it("sends zero cost (server-side estimation)", () => {
     const db = createDb(tmpDir, "state_5.sqlite", SCHEMA_NEW);
     const ts = Math.floor(new Date(2026, 3, 5, 12, 0, 0).getTime() / 1000);
     db.prepare("INSERT INTO threads (id, model, tokens_used, created_at) VALUES (?, ?, ?, ?)")
-      .run("t1", "o4-mini", 1000000, ts); // 1M tokens at $1/M = $1.00
+      .run("t1", "o4-mini", 1000000, ts);
     db.close();
 
     const result = collectCodexUsage("20260401");
-    assert.equal(result[0].modelBreakdowns[0].cost, 1.00);
+    assert.equal(result[0].modelBreakdowns[0].cost, 0);
   });
 });

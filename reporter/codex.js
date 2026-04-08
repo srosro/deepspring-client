@@ -2,15 +2,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const Database = require("better-sqlite3");
 
-// Estimated cost per million tokens (blended input/output rate)
-const CODEX_PRICING = {
-  "o3":       5.00,
-  "o4-mini":  1.00,
-  "gpt-4.1":  5.00,
-  "gpt-5":    5.00,
-  "gpt-5.4":  5.00,
-};
-const DEFAULT_RATE = 3.00; // per million tokens
+// Cost estimation is now handled server-side
 
 function getCodexDbPath() {
   const home = process.env.CODEX_HOME || path.join(process.env.HOME, ".codex");
@@ -66,8 +58,6 @@ function collectCodexUsage(sinceDateStr) {
   const byDate = {};
   for (const entry of Object.values(byDateModel)) {
     byDate[entry.date] = byDate[entry.date] || { date: entry.date, modelBreakdowns: [] };
-    const rate = CODEX_PRICING[entry.model] || DEFAULT_RATE;
-    const cost = (entry.tokens / 1e6) * rate;
 
     byDate[entry.date].modelBreakdowns.push({
       modelName: entry.model,
@@ -76,7 +66,7 @@ function collectCodexUsage(sinceDateStr) {
       cacheCreationTokens: 0,
       cacheReadTokens: 0,
       totalTokens: entry.tokens,
-      cost: Math.round(cost * 100) / 100,
+      cost: 0,
       source: "codex",
     });
   }
