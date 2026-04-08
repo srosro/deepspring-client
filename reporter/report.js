@@ -1,4 +1,5 @@
 const { execFileSync } = require("node:child_process");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
@@ -14,6 +15,15 @@ const TEAM = process.env.TEAM || "default";
 const API_KEY = process.env.API_KEY;
 const TOOLS = process.env.TOOLS || "";
 const ABOUT = process.env.ABOUT || "";
+
+// Stable machine identifier — auto-generated on first run
+const ENV_PATH = path.join(__dirname, "..", ".env");
+let CLIENT_ID = process.env.CLIENT_ID;
+if (!CLIENT_ID) {
+  CLIENT_ID = crypto.randomUUID();
+  fs.appendFileSync(ENV_PATH, `CLIENT_ID=${CLIENT_ID}\n`);
+  console.log(`Generated CLIENT_ID=${CLIENT_ID}`);
+}
 
 // Resolve ccusage binary — launchd/systemd don't inherit the user's shell PATH
 const CCUSAGE_CANDIDATES = [
@@ -74,7 +84,7 @@ if (mergedDaily.length === 0) {
   process.exit(0);
 }
 
-const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, about: ABOUT, data: mergedDaily });
+const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, about: ABOUT, client_id: CLIENT_ID, data: mergedDaily });
 
 const url = new URL("/api/usage", SERVER_URL);
 const transport = url.protocol === "https:" ? https : http;
