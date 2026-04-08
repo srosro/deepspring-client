@@ -13,6 +13,7 @@ const SERVER_URL = process.env.SERVER_URL || "https://www.deepspring.ai";
 const TEAM = process.env.TEAM || "default";
 const API_KEY = process.env.API_KEY;
 const TOOLS = process.env.TOOLS || "";
+const ABOUT = process.env.ABOUT || "";
 
 // Resolve ccusage binary — launchd/systemd don't inherit the user's shell PATH
 const CCUSAGE_CANDIDATES = [
@@ -73,7 +74,7 @@ if (mergedDaily.length === 0) {
   process.exit(0);
 }
 
-const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, data: mergedDaily });
+const payload = JSON.stringify({ username: USERNAME, team: TEAM, tools: TOOLS, about: ABOUT, data: mergedDaily });
 
 const url = new URL("/api/usage", SERVER_URL);
 const transport = url.protocol === "https:" ? https : http;

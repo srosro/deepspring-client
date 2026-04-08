@@ -55,6 +55,7 @@ USERNAME=your-name
 TEAM=your-team
 API_KEY=your-api-key-from-step-3
 TOOLS=comma,separated,tools
+ABOUT=Your about/contact info shown on your profile
 ```
 
 | Variable | Required | Description |
@@ -63,6 +64,7 @@ TOOLS=comma,separated,tools
 | `API_KEY` | Yes | The key returned by `/api/register` |
 | `TEAM` | No | Your team name (default: `default`) |
 | `TOOLS` | No | Comma-separated tools you **actively use daily** (see below) |
+| `ABOUT` | No | About/contact info displayed on your profile — so others can learn more about you or your usage |
 
 #### Tools
 
