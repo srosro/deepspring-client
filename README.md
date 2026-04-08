@@ -59,6 +59,7 @@ cp .env.example .env
 | `TOOLS` | No | Comma-separated tools/projects you use daily (see [Tools](#tools)) |
 | `ABOUT` | No | Bio/contact info shown on your [profile page](#profile-page) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
+| `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
 
 ### 5. First run
 
@@ -93,23 +94,41 @@ launchctl list | grep token-tracking
 systemctl --user status token-tracking-reporter.timer
 ```
 
+## Updating
+
+```bash
+cd deepspring-client
+git pull
+npm install
+```
+
+Your existing config (credentials, `CLIENT_ID`) is preserved — `git pull` never touches `.env`.
+
+### What's new
+
+Add these to your `.env` if you haven't already:
+
+| Setting | What it does |
+|---------|-------------|
+| `REPORT_MACHINE_CONFIG=true` | Shares your machine setup (OS, CPU, memory, installed skills) on your [profile page](#profile-page). **No prompts, code, conversation history, or API keys are ever sent.** |
+| `ABOUT="your bio here"` | Short bio, links, or contact info displayed on your profile. URLs are auto-linked. |
+| `REPORT_DAYS=1` | Only send the last day each cycle instead of 28. Recommended after your first sync. |
+
+`CLIENT_ID` is auto-generated on first run and written to `.env` — you don't need to set it. If you already have one, it's kept as-is.
+
 ## Backfill & Optimization
 
 By default the reporter sends 28 days of history. To backfill older data or optimize steady-state reporting:
 
-**Backfill** — do a one-time run with a large window:
+**Backfill** — set `REPORT_DAYS=365` in `.env` and run once:
 
 ```bash
-REPORT_DAYS=365 npm run report
+npm run report
 ```
 
-**Optimize** — after your initial sync, set `REPORT_DAYS=1` in `.env` so the background service only reports the last day each cycle instead of re-sending 28 days every 2 hours:
+**Optimize** — after your initial sync, change to `REPORT_DAYS=1` in `.env` so the background service only reports the last day each cycle instead of re-sending 28 days every 2 hours.
 
-```
-REPORT_DAYS=1
-```
-
-You can always do a manual full re-sync by running `REPORT_DAYS=28 npm run report`.
+You can always do a manual full re-sync by temporarily setting `REPORT_DAYS=28` and running `npm run report`.
 
 ## Multiple Machines
 
