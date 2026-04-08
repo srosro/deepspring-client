@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Leaderboard — Deepspring</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 2rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    a { color: #58a6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.25rem; }
+
+    .streak-banner {
+      background: linear-gradient(135deg, #1a1208 0%, #2d1b06 100%);
+      border: 1px solid #f0c040;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .streak-fire { font-size: 2.5rem; line-height: 1; }
+    .streak-text { font-size: 0.95rem; color: #e6edf3; }
+    .streak-text strong { color: #f0c040; }
+    .streak-count { font-size: 1.8rem; font-weight: 700; color: #f0c040; margin-left: auto; }
+
+    .section-label {
+      font-size: 0.8rem;
+      color: #7d8590;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .daily-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    .daily-table th {
+      text-align: left;
+      color: #7d8590;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #30363d;
+    }
+    .daily-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #21262d;
+      vertical-align: middle;
+    }
+    .daily-table tr:hover td { background: #161b22; }
+    .daily-table tr.today td { background: #1a2233; }
+
+    .winner-name { font-weight: 600; font-size: 0.95rem; }
+    .day-label { color: #7d8590; font-size: 0.85rem; }
+    .day-date { font-size: 0.75rem; color: #484f58; }
+    .token-count { text-align: right; font-weight: 700; font-size: 1rem; }
+    .cost { text-align: right; color: #7d8590; font-size: 0.85rem; }
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #2d1b06;
+      border: 1px solid #f0c040;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      color: #f0c040;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .runner-up { color: #7d8590; font-size: 0.8rem; }
+
+    .no-data { color: #484f58; font-style: italic; }
+
+    .toggle-group {
+      display: inline-flex;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .toggle-btn {
+      background: #161b22;
+      color: #7d8590;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      font-family: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border-right: 1px solid #30363d;
+    }
+    .toggle-btn:last-child { border-right: none; }
+    .toggle-btn.active { background: #1f6feb; color: #fff; }
+    .toggle-btn:hover:not(.active) { background: #21262d; }
+
+    .back-link { color: #7d8590; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+    <div>
+      <h1>Daily Leaderboard</h1>
+      <p style="color:#7d8590;font-size:0.8rem;margin-top:0.25rem">Who burned the most tokens each day?</p>
+    </div>
+    <a href="/" class="back-link">&larr; Back to main board</a>
+  </div>
+
+  <div id="streakBanner" class="streak-banner" style="display:none">
+    <span class="streak-fire">🔥</span>
+    <span class="streak-text" id="streakText"></span>
+    <span class="streak-count" id="streakCount"></span>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+    <span class="section-label">Daily Winners</span>
+    <div class="toggle-group">
+      <button class="toggle-btn active" onclick="setDays(7)">7 days</button>
+      <button class="toggle-btn" onclick="setDays(28)">1 month</button>
+    </div>
+  </div>
+
+  <div id="dailyTable"></div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let currentDays = 7;
+    let cachedRows = null;
+
+    function formatTokens(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+      if (n >= 1e3) return (n / 1e3).toFixed(0) + "K";
+      return n.toString();
+    }
+
+    function dayOfWeek(iso) {
+      const d = new Date(iso + "T12:00:00");
+      return d.toLocaleDateString("en-US", { weekday: "short" });
+    }
+
+    function setDays(days) {
+      currentDays = days;
+      document.querySelectorAll(".toggle-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.textContent.trim().startsWith(days === 7 ? "7" : "1"));
+      });
+      if (cachedRows) render(cachedRows);
+    }
+
+    // Compute daily winners from raw rows
+    function computeDaily(rows, numDays) {
+      const dates = [];
+      for (let i = numDays - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().slice(0, 10));
+      }
+      const dateSet = new Set(dates);
+
+      // Aggregate tokens per user per date
+      const byDate = {};
+      for (const r of rows) {
+        if (!dateSet.has(r.date)) continue;
+        byDate[r.date] = byDate[r.date] || {};
+        byDate[r.date][r.username] = (byDate[r.date][r.username] || { tokens: 0, cost: 0 });
+        byDate[r.date][r.username].tokens += r.total_tokens;
+        byDate[r.date][r.username].cost += r.cost;
+      }
+
+      // For each date, rank users
+      const dailyResults = [];
+      for (const date of dates) {
+        const users = byDate[date] || {};
+        const ranked = Object.entries(users)
+          .map(([username, data]) => ({ username, ...data }))
+          .sort((a, b) => b.tokens - a.tokens);
+        dailyResults.push({
+          date,
+          winner: ranked[0] || null,
+          runnerUp: ranked[1] || null,
+          participants: ranked.length,
+        });
+      }
+
+      return dailyResults;
+    }
+
+    // Compute win streaks: consecutive days as #1, counting backward from most recent
+    function computeStreaks(dailyResults) {
+      const streaks = {};
+      // Walk backwards to find active streaks
+      let activeUser = null;
+      let activeCount = 0;
+
+      for (let i = dailyResults.length - 1; i >= 0; i--) {
+        const day = dailyResults[i];
+        if (!day.winner) break;
+        if (i === dailyResults.length - 1) {
+          // Most recent day
+          activeUser = day.winner.username;
+          activeCount = 1;
+        } else if (day.winner.username === activeUser) {
+          activeCount++;
+        } else {
+          break;
+        }
+      }
+
+      if (activeUser && activeCount >= 2) {
+        streaks[activeUser] = activeCount;
+      }
+
+      // Also find longest historical streaks for display
+      let currentUser = null;
+      let currentCount = 0;
+      const bestStreaks = {};
+
+      for (const day of dailyResults) {
+        if (!day.winner) {
+          currentUser = null;
+          currentCount = 0;
+          continue;
+        }
+        if (day.winner.username === currentUser) {
+          currentCount++;
+        } else {
+          currentUser = day.winner.username;
+          currentCount = 1;
+        }
+        if (!bestStreaks[currentUser] || currentCount > bestStreaks[currentUser]) {
+          bestStreaks[currentUser] = currentCount;
+        }
+      }
+
+      return { active: streaks, best: bestStreaks };
+    }
+
+    function render(rows) {
+      const dailyResults = computeDaily(rows, currentDays);
+      const { active, best } = computeStreaks(dailyResults);
+
+      // Streak banner
+      const banner = document.getElementById("streakBanner");
+      const activeEntries = Object.entries(active);
+      if (activeEntries.length > 0) {
+        const [user, count] = activeEntries[0];
+        banner.style.display = "";
+        document.getElementById("streakText").innerHTML =
+          "<strong>" + user + "</strong> won top of the day <strong>" + count + " days in a row</strong>. BURN all your tokens to take them down.";
+        document.getElementById("streakCount").textContent = count + "🔥";
+      } else {
+        banner.style.display = "none";
+      }
+
+      // Count running streak per day for badge display
+      const runningStreak = [];
+      let sUser = null;
+      let sCount = 0;
+      for (const day of dailyResults) {
+        if (day.winner && day.winner.username === sUser) {
+          sCount++;
+        } else if (day.winner) {
+          sUser = day.winner.username;
+          sCount = 1;
+        } else {
+          sUser = null;
+          sCount = 0;
+        }
+        runningStreak.push({ user: sUser, count: sCount });
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+
+      // Render table (most recent first)
+      let html = '<table class="daily-table">';
+      html += "<thead><tr>";
+      html += "<th>Day</th>";
+      html += "<th>Winner</th>";
+      html += "<th>Runner-up</th>";
+      html += "<th style=\"text-align:right\">Tokens</th>";
+      html += "<th style=\"text-align:right\">Cost</th>";
+      html += "</tr></thead><tbody>";
+
+      for (let i = dailyResults.length - 1; i >= 0; i--) {
+        const day = dailyResults[i];
+        const isToday = day.date === today;
+        const streak = runningStreak[i];
+
+        html += '<tr class="' + (isToday ? "today" : "") + '">';
+        html += '<td><span class="day-label">' + dayOfWeek(day.date) + '</span> <span class="day-date">' + day.date + "</span></td>";
+
+        if (day.winner) {
+          let nameHtml = '<span class="winner-name">🏆 ' + day.winner.username + "</span>";
+          if (streak.count >= 2) {
+            nameHtml += ' <span class="streak-badge">🔥 ' + streak.count + "</span>";
+          }
+          html += "<td>" + nameHtml + "</td>";
+          html += '<td class="runner-up">' + (day.runnerUp ? day.runnerUp.username + " (" + formatTokens(day.runnerUp.tokens) + ")" : "") + "</td>";
+          html += '<td class="token-count">' + formatTokens(day.winner.tokens) + "</td>";
+          html += '<td class="cost">$' + day.winner.cost.toFixed(2) + "</td>";
+        } else {
+          html += '<td colspan="4" class="no-data">No data</td>';
+        }
+
+        html += "</tr>";
+      }
+
+      html += "</tbody></table>";
+      document.getElementById("dailyTable").innerHTML = html;
+    }
+
+    async function load() {
+      const res = await fetch(API_BASE + "/api/usage?days=28");
+      const { rows } = await res.json();
+      cachedRows = rows;
+      render(rows);
+    }
+
+    load();
+    setInterval(load, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
