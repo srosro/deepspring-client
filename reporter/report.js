@@ -18,6 +18,7 @@ const TOOLS = process.env.TOOLS || "";
 const COMMUNITIES = process.env.COMMUNITIES || "";
 const PROJECTS = process.env.PROJECTS || "";
 const ABOUT = process.env.ABOUT || "";
+const HN_USERNAME = process.env.HN_USERNAME || "";
 
 // Stable machine identifier — auto-generated on first run
 const ENV_PATH = path.join(__dirname, "..", ".env");
@@ -169,6 +170,7 @@ async function main() {
     communities: COMMUNITIES,
     projects: PROJECTS,
     about: ABOUT,
+    hn_username: HN_USERNAME,
     client_id: CLIENT_ID,
     report_days: REPORT_DAYS,
     data: mergedDaily,

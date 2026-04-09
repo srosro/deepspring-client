@@ -60,6 +60,7 @@ cp .env.example .env
 | `PROJECTS` | No | What are you spending tokens on? The projects you're actively building with AI. |
 | `COMMUNITIES` | No | What developer communities are you part of? |
 | `ABOUT` | No | Bio, config details, and links shown on your [profile page](#profile-page) |
+| `HN_USERNAME` | No | Your Hacker News username (e.g. `Sam_Odio`). Required to appear on the leaderboard — see [HN Verification](#hn-verification) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
 
@@ -117,6 +118,7 @@ If you're updating an existing install, refer to the config table above and add 
 | `COMMUNITIES=bloomberg-ai-engineering,agentcribs-community` | Developer communities you're part of. Shown as badges on your profile and leaderboard. |
 | `ABOUT="..."` | Bio, config details, and links shown on your profile. Share your setup — blog posts, tweets, or videos where you've discussed your workflow. URLs are auto-linked. |
 | `REPORT_DAYS=1` | Only send the last day each cycle instead of 28. Recommended after your first sync. |
+| `HN_USERNAME=Sam_Odio` | Your Hacker News username. Required for leaderboard visibility — see [HN Verification](#hn-verification). |
 
 `CLIENT_ID` is auto-generated on first run and written to `.env` — you don't need to set it. If you already have one, it's kept as-is.
 
@@ -159,6 +161,19 @@ ABOUT="ML engineer. My Claude Code setup: https://blog.example.com/my-ai-workflo
 ```
 
 URLs are auto-linked on the profile page.
+
+## HN Verification
+
+To prevent fake accounts, new users must verify a Hacker News account to appear on the leaderboard. Here's how:
+
+1. Set `HN_USERNAME` in your `.env` (e.g. `HN_USERNAME=Sam_Odio`)
+2. Run `npm run report` so the server knows your HN username
+3. Add your tkmx profile URL to your [HN about section](https://news.ycombinator.com/user). For example, see [Sam_Odio's HN profile](https://news.ycombinator.com/user?id=Sam_Odio) — the about field includes `https://tkmx.odio.dev/user/samodio`
+4. Visit your tkmx profile and click "Verify"
+
+HN may cache your about section for a few minutes. If verification fails, wait a minute and try again.
+
+You can still register, report usage, and view your profile without verification — you just won't appear on the public leaderboard.
 
 ## Tools, Projects & Communities
 
