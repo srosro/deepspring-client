@@ -59,7 +59,7 @@ cp .env.example .env
 | `TOOLS` | No | What AI coding tools do you actually use daily? (see [Tools, Projects & Communities](#tools-projects--communities)) |
 | `PROJECTS` | No | What are you spending tokens on? The projects you're actively building with AI. |
 | `COMMUNITIES` | No | What developer communities are you part of? |
-| `ABOUT` | No | Bio, config details, and links shown on your [profile page](#profile-page) |
+| `ABOUT` | No | The main content of your profile — describe your setup, link to tools you use, share blog posts/videos about your workflow. URLs are auto-linked. See [Profile Page](#profile-page) |
 | `HN_USERNAME` | No | Your Hacker News username (e.g. `Sam_Odio`). Required to appear on the leaderboard — see [HN Verification](#appearing-on-the-leaderboard-hn-verification) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
@@ -154,13 +154,13 @@ Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_N
 - Number of reporting machines
 - Your bio from the `ABOUT` field
 
-The `ABOUT` field in `.env` is displayed on your profile. Share your setup, workflow, and any links where you've published or discussed your config:
+The `ABOUT` field is the main content of your profile. This is your chance to help other developers by sharing what tools you use and how you use them. Link to the tools, share blog posts, YouTube videos, or tweets about your workflow:
 
 ```
-ABOUT="ML engineer. My Claude Code setup: https://blog.example.com/my-ai-workflow — @handle"
+ABOUT="Building with https://github.com/nickarail/arsenal — here's my setup video: https://youtube.com/... — 3x founder, shipping AI-first products"
 ```
 
-URLs are auto-linked on the profile page.
+URLs are auto-linked on your profile page. The more detail you share, the more useful your profile is to the community.
 
 ## Appearing on the Leaderboard (HN Verification)
 
