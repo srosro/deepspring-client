@@ -56,8 +56,9 @@ cp .env.example .env
 | `USERNAME` | Yes | Your registered username |
 | `API_KEY` | Yes | The key returned by `/api/register` |
 | `TEAM` | No | Your team name (default: `default`) |
-| `TOOLS` | No | Comma-separated tools/projects you use daily (see [Tools](#tools)) |
-| `COMMUNITIES` | No | Comma-separated community names shown on your profile and leaderboard |
+| `TOOLS` | No | Comma-separated AI coding tools you use daily (see [Tools, Projects & Communities](#tools-projects--communities)) |
+| `PROJECTS` | No | Comma-separated projects you're building or contributing to |
+| `COMMUNITIES` | No | Comma-separated developer communities you're part of |
 | `ABOUT` | No | Bio, config details, and links shown on your [profile page](#profile-page) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
@@ -112,7 +113,8 @@ If you're updating an existing install, refer to the config table above and add 
 | Setting | What it does |
 |---------|-------------|
 | `REPORT_MACHINE_CONFIG=true` | Shares your machine setup (OS, CPU, memory, installed skills) on your [profile page](#profile-page). **No prompts, code, conversation history, or API keys are ever sent.** |
-| `COMMUNITIES=bloomberg-ai-engineering,agentcribs-community` | Shows community tags on your profile and leaderboard. Use plain names, not `#`-prefixed values. |
+| `PROJECTS=tkmx,plow.co` | Projects you're building. Shown as badges on your profile and leaderboard. |
+| `COMMUNITIES=bloomberg-ai-engineering,agentcribs-community` | Developer communities you're part of. Shown as badges on your profile and leaderboard. |
 | `ABOUT="..."` | Bio, config details, and links shown on your profile. Share your setup — blog posts, tweets, or videos where you've discussed your workflow. URLs are auto-linked. |
 | `REPORT_DAYS=1` | Only send the last day each cycle instead of 28. Recommended after your first sync. |
 
@@ -146,8 +148,7 @@ Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_N
 - Claude vs Codex cost breakdown
 - Model breakdown by tokens
 - Daily usage chart (28 days)
-- Tools/projects badges
-- Community badges
+- Tools, projects, and community badges
 - Number of reporting machines
 - Your bio from the `ABOUT` field
 
@@ -159,17 +160,23 @@ ABOUT="ML engineer. My Claude Code setup: https://blog.example.com/my-ai-workflo
 
 URLs are auto-linked on the profile page.
 
-Community tags are configured separately so they can be clicked as filters on the leaderboard:
+## Tools, Projects & Communities
+
+Everyone's tweeting about the latest hot AI tool, but most of it is vaporware. By listing what you actually use day-to-day, you help the developer community see what's real and what's hype. Your usage data — backed by actual token spend — shows what tools people are building with in production, not just what they tried once and posted about.
+
+All three fields show as clickable badges on your profile and the leaderboard.
 
 ```
+TOOLS=superpowers,arsenal
+PROJECTS=tkmx,plow.co
 COMMUNITIES=bloomberg-ai-engineering,agentcribs-community
 ```
 
-## Tools
+- **TOOLS** — AI coding tools and skills you use regularly. Only list what you actually use, not everything you've tried.
+- **PROJECTS** — What you're building or contributing to. Helps others discover what's being built with AI coding tools.
+- **COMMUNITIES** — Developer communities you're part of. Clickable filters on the leaderboard.
 
-The `TOOLS` field tags your profile with the AI coding skills and projects you use. These show as badges on the leaderboard and feed the "Most Popular Projects" ranking.
-
-Only list tools you actually use regularly — not everything you've tried.
+### Known Tools
 
 | Tool | Description |
 |------|-------------|
