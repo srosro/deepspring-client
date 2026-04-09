@@ -179,6 +179,14 @@ async function main() {
   if (machineConfig) body.machine_config = machineConfig;
 
   await postUsage(JSON.stringify(body));
+
+  const profileUrl = `${SERVER_URL}/user/${USERNAME}`;
+  console.log(`  Profile: ${profileUrl}`);
+  if (!HN_USERNAME) {
+    console.log(`  Set HN_USERNAME in .env to unlock leaderboard visibility`);
+  } else {
+    console.log(`  Verify your HN account at your profile page to appear on the leaderboard`);
+  }
 }
 
 main().catch((err) => {
