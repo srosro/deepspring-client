@@ -56,9 +56,9 @@ cp .env.example .env
 | `USERNAME` | Yes | Your registered username |
 | `API_KEY` | Yes | The key returned by `/api/register` |
 | `TEAM` | No | Your team name (default: `default`) |
-| `TOOLS` | No | Comma-separated AI coding tools you use daily (see [Tools, Projects & Communities](#tools-projects--communities)) |
-| `PROJECTS` | No | Comma-separated projects you're building or contributing to |
-| `COMMUNITIES` | No | Comma-separated developer communities you're part of |
+| `TOOLS` | No | What AI coding tools do you actually use daily? (see [Tools, Projects & Communities](#tools-projects--communities)) |
+| `PROJECTS` | No | What are you spending tokens on? The projects you're actively building with AI. |
+| `COMMUNITIES` | No | What developer communities are you part of? |
 | `ABOUT` | No | Bio, config details, and links shown on your [profile page](#profile-page) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
@@ -172,9 +172,9 @@ PROJECTS=tkmx,plow.co
 COMMUNITIES=bloomberg-ai-engineering,agentcribs-community
 ```
 
-- **TOOLS** — AI coding tools and skills you use regularly. Only list what you actually use, not everything you've tried.
-- **PROJECTS** — What you're building or contributing to. Helps others discover what's being built with AI coding tools.
-- **COMMUNITIES** — Developer communities you're part of. Clickable filters on the leaderboard.
+- **TOOLS** — What AI coding tools do you actually use daily? Only list what you really use, not everything you've tried.
+- **PROJECTS** — What are you spending tokens on? The projects you're actively building with AI. Shows up as "building:" on your profile.
+- **COMMUNITIES** — What developer communities are you part of? Clickable filters on the leaderboard.
 
 ### Known Tools
 
