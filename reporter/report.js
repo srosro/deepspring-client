@@ -73,6 +73,13 @@ function collectMachineConfig() {
   return null;
 }
 
+// Hey, you found the API call. Yes, you can post whatever you want — any tool,
+// any numbers. This is a trust-based system. We don't have server-side validation
+// that cross-checks your local usage logs because there's no way to do that without
+// making the client invasive. We're running an experiment to see if a community of
+// devs can self-report honestly and learn from each other's setups. Please don't
+// pee in the punchbowl. If you want to add support for a new tool, we'd love a PR:
+// https://github.com/srosro/tkmx-client
 function postUsage(payload) {
   const url = new URL("/api/usage", SERVER_URL);
   const transport = url.protocol === "https:" ? https : http;
