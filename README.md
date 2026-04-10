@@ -144,6 +144,16 @@ The client supports reporting from multiple machines under the same username. Ea
 
 Your [profile page](https://tokenmaxxing.odio.dev) shows how many machines you're reporting from.
 
+### Aggregating from synced remote machines
+
+If you already sync `~/.claude` from other machines to a central location (e.g. via rsync, Syncthing, or a tool like [engineering-notebook](https://github.com/obra/engineering-notebook)), you can aggregate all of them into a single report without installing the client on each machine. Set `EXTRA_CLAUDE_CONFIGS` in `.env` to a comma-separated list of directories, each containing a `projects/` subdirectory of Claude Code JSONL sessions:
+
+```
+EXTRA_CLAUDE_CONFIGS=/path/to/synced-laptop,/path/to/synced-desktop
+```
+
+The reporter runs `ccusage` once per directory (using `CLAUDE_CONFIG_DIR`) and merges the results with the local machine's usage before submitting.
+
 ## Profile Page
 
 Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_NAME` showing:

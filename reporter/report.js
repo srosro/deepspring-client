@@ -20,6 +20,12 @@ const PROJECTS = process.env.PROJECTS || "";
 const ABOUT = process.env.ABOUT || "";
 const HN_USERNAME = process.env.HN_USERNAME || "";
 const DEMO_VIDEO_URL = process.env.DEMO_VIDEO_URL || "";
+// Additional Claude config dirs to collect usage from (comma-separated). Each
+// must be a directory containing a `projects/` subdirectory of JSONL session
+// files — typically a synced snapshot of another machine's ~/.claude. Lets a
+// single reporter aggregate usage across several machines without installing
+// the client on each one.
+const EXTRA_CLAUDE_CONFIGS = process.env.EXTRA_CLAUDE_CONFIGS || "";
 
 // Stable machine identifier — auto-generated on first run
 const ENV_PATH = path.join(__dirname, "..", ".env");
@@ -127,27 +133,54 @@ async function main() {
 
   console.log(`[${new Date().toISOString()}] Collecting ${REPORT_DAYS}d usage since ${sinceStr} for ${USERNAME} (team: ${TEAM})`);
 
-  // Collect Claude usage
-  let claudeDaily = [];
-  let claudeErr = null;
-  try {
-    const raw = execFileSync(CCUSAGE, ["--json", "--offline", "--since", sinceStr], {
-      encoding: "utf-8",
-      timeout: 30000,
-    });
-    const parsed = JSON.parse(raw);
-    claudeDaily = parsed.daily || [];
-    // Tag each breakdown with source
-    for (const day of claudeDaily) {
-      for (const m of day.modelBreakdowns) {
-        m.source = "claude";
+  // Collect Claude usage — once from the local ~/.claude, then once per
+  // EXTRA_CLAUDE_CONFIGS entry (CLAUDE_CONFIG_DIR pointed at a synced remote).
+  // We run ccusage separately per config dir rather than pointing ccusage at a
+  // comma-joined CLAUDE_CONFIG_DIR, because a single ccusage process over
+  // multi-machine data can OOM; separating keeps each run bounded.
+  function collectCcusage(label, env) {
+    try {
+      const raw = execFileSync(CCUSAGE, ["--json", "--offline", "--since", sinceStr], {
+        encoding: "utf-8",
+        timeout: 60000,
+        env: { ...process.env, ...env },
+      });
+      const parsed = JSON.parse(raw);
+      const daily = parsed.daily || [];
+      for (const day of daily) {
+        for (const m of day.modelBreakdowns) {
+          m.source = "claude";
+        }
       }
+      console.log(`  Claude (${label}): ${daily.length} days`);
+      return { daily, err: null };
+    } catch (err) {
+      console.error(`  Claude (${label}) failed:`, err.message);
+      return { daily: [], err };
     }
-    console.log(`  Claude: ${claudeDaily.length} days`);
-  } catch (err) {
-    claudeErr = err;
-    console.error("  ccusage failed (continuing with codex only):", err.message);
   }
+
+  let claudeDaily = [];
+  const claudeErrs = [];
+  const localResult = collectCcusage("local", {});
+  claudeDaily = claudeDaily.concat(localResult.daily);
+  if (localResult.err) claudeErrs.push(localResult.err);
+
+  if (EXTRA_CLAUDE_CONFIGS) {
+    for (const configDir of EXTRA_CLAUDE_CONFIGS.split(",").map((s) => s.trim()).filter(Boolean)) {
+      const label = path.basename(path.dirname(configDir)) || configDir;
+      const result = collectCcusage(label, {
+        CLAUDE_CONFIG_DIR: configDir,
+        // Multi-machine dirs can be large; give ccusage more heap headroom.
+        NODE_OPTIONS: "--max-old-space-size=8192",
+      });
+      claudeDaily = claudeDaily.concat(result.daily);
+      if (result.err) claudeErrs.push(result.err);
+    }
+  }
+
+  // Only treat Claude collection as failed if every ccusage call failed.
+  const claudeErr = claudeDaily.length === 0 && claudeErrs.length > 0 ? claudeErrs[0] : null;
 
   // Collect Codex usage
   let codexDaily = [];
