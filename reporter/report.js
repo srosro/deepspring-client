@@ -7,6 +7,7 @@ const http = require("node:http");
 const https = require("node:https");
 const { collectCodexUsage } = require("./codex");
 const { mergeDailyUsage } = require("./merge");
+const { parseExtraConfigs, aggregateClaudeResults, collectCcusage } = require("./claude-collect");
 
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
@@ -138,49 +139,26 @@ async function main() {
   // We run ccusage separately per config dir rather than pointing ccusage at a
   // comma-joined CLAUDE_CONFIG_DIR, because a single ccusage process over
   // multi-machine data can OOM; separating keeps each run bounded.
-  function collectCcusage(label, env) {
-    try {
-      const raw = execFileSync(CCUSAGE, ["--json", "--offline", "--since", sinceStr], {
-        encoding: "utf-8",
-        timeout: 60000,
-        env: { ...process.env, ...env },
-      });
-      const parsed = JSON.parse(raw);
-      const daily = parsed.daily || [];
-      for (const day of daily) {
-        for (const m of day.modelBreakdowns) {
-          m.source = "claude";
-        }
-      }
-      console.log(`  Claude (${label}): ${daily.length} days`);
-      return { daily, err: null };
-    } catch (err) {
-      console.error(`  Claude (${label}) failed:`, err.message);
-      return { daily: [], err };
+  const claudeResults = [collectCcusage(CCUSAGE, sinceStr, "local", {}, 30000)];
+
+  for (const configDir of parseExtraConfigs(EXTRA_CLAUDE_CONFIGS)) {
+    const label = path.basename(configDir) || configDir;
+    if (!fs.existsSync(path.join(configDir, "projects"))) {
+      const msg = `missing projects/ subdir at ${configDir}`;
+      console.error(`  Claude (${label}) skipped: ${msg}`);
+      claudeResults.push({ daily: [], err: new Error(msg) });
+      continue;
     }
-  }
-
-  let claudeDaily = [];
-  const claudeErrs = [];
-  const localResult = collectCcusage("local", {});
-  claudeDaily = claudeDaily.concat(localResult.daily);
-  if (localResult.err) claudeErrs.push(localResult.err);
-
-  if (EXTRA_CLAUDE_CONFIGS) {
-    for (const configDir of EXTRA_CLAUDE_CONFIGS.split(",").map((s) => s.trim()).filter(Boolean)) {
-      const label = path.basename(path.dirname(configDir)) || configDir;
-      const result = collectCcusage(label, {
+    claudeResults.push(
+      collectCcusage(CCUSAGE, sinceStr, label, {
         CLAUDE_CONFIG_DIR: configDir,
         // Multi-machine dirs can be large; give ccusage more heap headroom.
         NODE_OPTIONS: "--max-old-space-size=8192",
-      });
-      claudeDaily = claudeDaily.concat(result.daily);
-      if (result.err) claudeErrs.push(result.err);
-    }
+      }, 60000),
+    );
   }
 
-  // Only treat Claude collection as failed if every ccusage call failed.
-  const claudeErr = claudeDaily.length === 0 && claudeErrs.length > 0 ? claudeErrs[0] : null;
+  const { daily: claudeDaily, err: claudeErr } = aggregateClaudeResults(claudeResults);
 
   // Collect Codex usage
   let codexDaily = [];
