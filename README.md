@@ -60,6 +60,7 @@ cp .env.example .env
 | `PROJECTS` | No | What are you spending tokens on? The projects you're actively building with AI. |
 | `COMMUNITIES` | No | What developer communities are you part of? |
 | `ABOUT` | No | The main content of your profile — describe your setup, link to tools you use, share blog posts/videos about your workflow. URLs are auto-linked. See [Profile Page](#profile-page) |
+| `DEMO_VIDEO_URL` | No | YouTube URL (4 min or shorter) showing your before/after AI coding workflow. Embedded on your profile page. |
 | `HN_USERNAME` | No | Your Hacker News username (e.g. `Sam_Odio`). Required to appear on the leaderboard — see [HN Verification](#appearing-on-the-leaderboard-hn-verification) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
@@ -118,6 +119,7 @@ If you're updating an existing install, refer to the config table above and add 
 | `COMMUNITIES=bloomberg-ai-engineering,agentcribs-community` | Developer communities you're part of. Shown as badges on your profile and leaderboard. |
 | `ABOUT="..."` | Bio, config details, and links shown on your profile. Share your setup — blog posts, tweets, or videos where you've discussed your workflow. URLs are auto-linked. |
 | `REPORT_DAYS=1` | Only send the last day each cycle instead of 28. Recommended after your first sync. |
+| `DEMO_VIDEO_URL=https://www.youtube.com/watch?v=...` | YouTube demo video (4 min or shorter) embedded on your profile. Show before/after workflows — how you worked before AI tools vs. after. |
 | `HN_USERNAME=Sam_Odio` | Your Hacker News username. Required for leaderboard visibility — see [HN Verification](#appearing-on-the-leaderboard-hn-verification). |
 
 `CLIENT_ID` is auto-generated on first run and written to `.env` — you don't need to set it. If you already have one, it's kept as-is.
@@ -154,13 +156,21 @@ Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_N
 - Number of reporting machines
 - Your bio from the `ABOUT` field
 
-The `ABOUT` field is the main content of your profile. This is your chance to help other developers by sharing what tools you use and how you use them. Link to the tools, share blog posts, YouTube videos, or tweets about your workflow:
+The `ABOUT` field is the main content of your profile. This is your chance to help other developers by sharing what tools you use and how you use them. Link to the tools, share blog posts, or tweets about your workflow:
 
 ```
-ABOUT="Building with https://github.com/nickarail/arsenal — here's my setup video: https://youtube.com/... — 3x founder, shipping AI-first products"
+ABOUT="Building with https://github.com/nickarail/arsenal — 3x founder, shipping AI-first products"
 ```
 
 URLs are auto-linked on your profile page. The more detail you share, the more useful your profile is to the community.
+
+### Demo Video
+
+Set `DEMO_VIDEO_URL` to a YouTube link (4 minutes or shorter) and it will be embedded directly on your profile. The best demo videos show **before/after workflows** — how you approached a task before AI tools vs. how you do it now. This is the single most useful thing you can share with other developers.
+
+```
+DEMO_VIDEO_URL=https://www.youtube.com/watch?v=YiDcgyAn-88
+```
 
 ## Appearing on the Leaderboard (HN Verification)
 
