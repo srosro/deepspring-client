@@ -144,6 +144,21 @@ The client supports reporting from multiple machines under the same username. Ea
 
 Your [profile page](https://tokenmaxxing.odio.dev) shows how many machines you're reporting from.
 
+## OpenAI Platform Usage
+
+If you make OpenAI API calls directly (not through Codex CLI), you can pull token usage from `platform.openai.com/usage` and merge it into your reports. This covers any OpenAI API usage — your own scripts, agents, third-party tools authenticated with your API keys, etc.
+
+1. Create an admin API key at [platform.openai.com/settings/organization/admin-keys](https://platform.openai.com/settings/organization/admin-keys) (must be an Organization Owner). Regular project keys won't work — the org usage endpoint requires an admin key.
+2. Add it to `.env`:
+   ```
+   OPENAI_ADMIN_KEY=sk-admin-...
+   ```
+3. Run `npm run report`. You'll see a new `OpenAI platform` line in the output.
+
+The client only *reads* usage data; it never sends your admin key anywhere except `api.openai.com`. Reports use the `/v1/organization/usage/completions` endpoint, which covers chat completions and the Responses API — essentially all OpenAI token volume for most users.
+
+> **⚠️ Don't double-count Codex CLI:** If your Codex CLI is authenticated with an OpenAI API key (rather than a ChatGPT Plus/Pro subscription), its traffic already appears in platform usage. Enabling `OPENAI_ADMIN_KEY` alongside Codex collection will double-count those tokens. Leave `OPENAI_ADMIN_KEY` unset if Codex is on API-key auth.
+
 ## Profile Page
 
 Each user gets a shareable profile at `https://tokenmaxxing.odio.dev/user/YOUR_NAME` showing:

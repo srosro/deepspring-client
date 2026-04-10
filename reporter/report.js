@@ -6,6 +6,7 @@ const path = require("node:path");
 const http = require("node:http");
 const https = require("node:https");
 const { collectCodexUsage } = require("./codex");
+const { collectOpenAIUsage } = require("./openai");
 const { mergeDailyUsage } = require("./merge");
 
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
@@ -160,11 +161,26 @@ async function main() {
     console.error("  Codex collection failed (continuing with claude only):", err.message);
   }
 
+  // Collect OpenAI platform usage (optional — requires OPENAI_ADMIN_KEY).
+  // Covers API-key-authenticated usage from platform.openai.com/usage, which
+  // is disjoint from Codex CLI usage when Codex is using ChatGPT subscription
+  // auth. If your Codex is API-key-authed, leave OPENAI_ADMIN_KEY unset to
+  // avoid double-counting.
+  let openaiDaily = [];
+  try {
+    openaiDaily = await collectOpenAIUsage(sinceStr);
+    if (openaiDaily.length > 0) {
+      console.log(`  OpenAI platform: ${openaiDaily.length} days`);
+    }
+  } catch (err) {
+    console.error("  OpenAI platform collection failed (continuing):", err.message);
+  }
+
   if (claudeErr && codexErr) {
     throw new Error("Both Claude and Codex collection failed");
   }
 
-  const mergedDaily = mergeDailyUsage(claudeDaily, codexDaily);
+  const mergedDaily = mergeDailyUsage(claudeDaily, codexDaily, openaiDaily);
 
   if (mergedDaily.length === 0) {
     console.log("No usage data to report.");
