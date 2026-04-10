@@ -42,6 +42,30 @@ if (!USERNAME || !API_KEY) {
   process.exit(1);
 }
 
+function collectClaudeSkills() {
+  // Authoritative plugin list lives in installed_plugins.json — walking the
+  // cache directly would pick up temp_git_* clones and their repo contents.
+  const manifest = path.join(os.homedir(), ".claude", "plugins", "installed_plugins.json");
+  if (!fs.existsSync(manifest)) return [];
+
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(manifest, "utf-8"));
+  } catch {
+    return [];
+  }
+
+  // Report one entry per installed plugin (e.g. "superpowers"), not one per
+  // skill inside it — the plugin is the unit users recognize and share.
+  const skills = new Set();
+  const plugins = parsed.plugins || {};
+  for (const pluginKey of Object.keys(plugins)) {
+    // pluginKey looks like "superpowers@claude-plugins-official"
+    skills.add(pluginKey.split("@")[0]);
+  }
+  return Array.from(skills).sort();
+}
+
 function collectMachineConfig() {
   if (process.env.REPORT_MACHINE_CONFIG !== "true") return null;
 
@@ -49,17 +73,8 @@ function collectMachineConfig() {
   const cpus = os.cpus();
   if (cpus.length > 0) cfg.cpu = cpus[0].model.trim() + " (" + cpus.length + " cores)";
   try { cfg.codex_version = execFileSync("codex", ["--version"], { encoding: "utf-8", timeout: 5000 }).trim(); } catch {}
-  const pluginsDir = path.join(os.homedir(), ".claude", "plugins", "cache");
-  if (fs.existsSync(pluginsDir)) {
-    const skills = [];
-    for (const org of fs.readdirSync(pluginsDir)) {
-      const orgPath = path.join(pluginsDir, org);
-      if (fs.statSync(orgPath).isDirectory()) {
-        for (const plugin of fs.readdirSync(orgPath)) skills.push(plugin);
-      }
-    }
-    if (skills.length > 0) cfg.claude_skills = skills;
-  }
+  const skills = collectClaudeSkills();
+  if (skills.length > 0) cfg.claude_skills = skills;
   // Only send if config changed since last report
   const cfgJson = JSON.stringify(cfg);
   const cfgHash = crypto.createHash("sha256").update(cfgJson).digest("hex").slice(0, 16);

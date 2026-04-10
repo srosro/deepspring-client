@@ -5,6 +5,7 @@
   "scripts": {
     "report": "node reporter/report.js",
     "install-service": "node reporter/install.js",
+    "uninstall-service": "node reporter/uninstall.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
