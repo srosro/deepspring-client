@@ -31,14 +31,7 @@ const DEMO_VIDEO_URL = process.env.DEMO_VIDEO_URL || "";
 // the client on each one.
 const EXTRA_CLAUDE_CONFIGS = process.env.EXTRA_CLAUDE_CONFIGS || "";
 
-// Stable machine identifier — auto-generated on first run
 const ENV_PATH = path.join(__dirname, "..", ".env");
-let CLIENT_ID = process.env.CLIENT_ID;
-if (!CLIENT_ID) {
-  CLIENT_ID = crypto.randomUUID();
-  fs.appendFileSync(ENV_PATH, `CLIENT_ID=${CLIENT_ID}\n`);
-  console.log(`Generated CLIENT_ID=${CLIENT_ID}`);
-}
 
 // Resolve ccusage binary — launchd/systemd don't inherit the user's shell PATH
 const CCUSAGE_CANDIDATES = [
@@ -51,6 +44,47 @@ const CCUSAGE = CCUSAGE_CANDIDATES.find((p) => fs.existsSync(p)) || "ccusage";
 if (!USERNAME || !API_KEY) {
   console.error("USERNAME and API_KEY must be set in .env");
   process.exit(1);
+}
+
+// Read a per-host identifier from the OS so re-installs / parallel checkouts on
+// the same machine collapse to one CLIENT_ID instead of triple-counting usage.
+function readMachineId() {
+  try {
+    if (process.platform === "darwin") {
+      const out = execFileSync("ioreg", ["-rd1", "-c", "IOPlatformExpertDevice"], { encoding: "utf8" });
+      const m = out.match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/);
+      if (m) return m[1];
+    } else if (process.platform === "linux") {
+      for (const p of ["/etc/machine-id", "/var/lib/dbus/machine-id"]) {
+        if (fs.existsSync(p)) {
+          const id = fs.readFileSync(p, "utf8").trim();
+          if (id) return id;
+        }
+      }
+    } else if (process.platform === "win32") {
+      const out = execFileSync("reg", ["query", "HKLM\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid"], { encoding: "utf8" });
+      const m = out.match(/MachineGuid\s+REG_SZ\s+([0-9a-fA-F-]+)/);
+      if (m) return m[1];
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Salted with username so the same host shared by two users yields two distinct
+// IDs, and so the raw OS identifier never leaves the machine.
+function deriveClientId(username) {
+  const machineId = readMachineId();
+  if (!machineId) return crypto.randomUUID();
+  return crypto.createHash("sha256").update(machineId + "|" + username).digest("hex").slice(0, 32);
+}
+
+// Stable machine identifier — derived from OS, written to .env on first run.
+// Existing CLIENT_ID values in .env are preserved untouched.
+let CLIENT_ID = process.env.CLIENT_ID;
+if (!CLIENT_ID) {
+  CLIENT_ID = deriveClientId(USERNAME);
+  fs.appendFileSync(ENV_PATH, `CLIENT_ID=${CLIENT_ID}\n`);
+  console.log(`Generated CLIENT_ID=${CLIENT_ID}`);
 }
 
 function collectMachineConfig() {
