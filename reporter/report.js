@@ -120,6 +120,10 @@ function postUsage(payload) {
 
 async function main() {
   const REPORT_DAYS = parseInt(process.env.REPORT_DAYS) || 28;
+  // ccusage scans every JSONL transcript under ~/.claude/projects. Heavy users
+  // with many projects or large session logs can exceed a tight timeout;
+  // override with CCUSAGE_TIMEOUT_MS if 2 minutes isn't enough.
+  const CCUSAGE_TIMEOUT_MS = parseInt(process.env.CCUSAGE_TIMEOUT_MS) || 120000;
 
   const since = new Date();
   since.setDate(since.getDate() - REPORT_DAYS);
@@ -135,7 +139,7 @@ async function main() {
   // We run ccusage separately per config dir rather than pointing ccusage at a
   // comma-joined CLAUDE_CONFIG_DIR, because a single ccusage process over
   // multi-machine data can OOM; separating keeps each run bounded.
-  const claudeResults = [collectCcusage(CCUSAGE, sinceStr, "local", {}, 30000)];
+  const claudeResults = [collectCcusage(CCUSAGE, sinceStr, "local", {}, CCUSAGE_TIMEOUT_MS)];
 
   for (const configDir of parseExtraConfigs(EXTRA_CLAUDE_CONFIGS)) {
     const label = path.basename(configDir) || configDir;
@@ -150,7 +154,7 @@ async function main() {
         CLAUDE_CONFIG_DIR: configDir,
         // Multi-machine dirs can be large; give ccusage more heap headroom.
         NODE_OPTIONS: "--max-old-space-size=8192",
-      }, 60000),
+      }, CCUSAGE_TIMEOUT_MS),
     );
   }
 

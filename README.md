@@ -64,6 +64,7 @@ cp .env.example .env
 | `HN_USERNAME` | No | Your Hacker News username (e.g. `Sam_Odio`). Required to appear on the leaderboard — see [HN Verification](#appearing-on-the-leaderboard-hn-verification) |
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills) on your profile. No prompts, code, or keys are ever sent. |
+| `CCUSAGE_TIMEOUT_MS` | No | Milliseconds to wait for each `ccusage` run before giving up (default: `120000` = 2 min). Bump if you have a large `~/.claude/projects` tree and see `ccusage ETIMEDOUT`. |
 
 ### 5. First run
 
