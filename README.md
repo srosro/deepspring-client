@@ -6,8 +6,8 @@ Reports your Claude Code and Codex token usage to the [Tokenmaxxing Leaderboard]
 
 ```bash
 npm install -g ccusage            # Claude Code usage reader
-git clone git@github.com:srosro/deepspring-client.git
-cd deepspring-client && npm install
+git clone git@github.com:srosro/tkmx-client.git
+cd tkmx-client && npm install
 cp .env.example .env              # then edit .env (see below)
 npm run report                    # test it
 npm run install-service           # auto-report every 2 hours
@@ -26,8 +26,8 @@ npm install -g ccusage
 ### 2. Clone and install
 
 ```
-git clone git@github.com:srosro/deepspring-client.git
-cd deepspring-client
+git clone git@github.com:srosro/tkmx-client.git
+cd tkmx-client
 npm install
 ```
 
@@ -101,7 +101,7 @@ systemctl --user status token-tracking-reporter.timer
 ## Updating
 
 ```bash
-cd deepspring-client
+cd tkmx-client
 git pull
 npm install
 ```

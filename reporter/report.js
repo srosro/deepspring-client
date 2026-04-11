@@ -8,6 +8,7 @@ const https = require("node:https");
 const { collectCodexUsage } = require("./codex");
 const { mergeDailyUsage } = require("./merge");
 const { parseExtraConfigs, aggregateClaudeResults, collectCcusage } = require("./claude-collect");
+const { collectClaudeSkills } = require("./skills");
 
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
@@ -58,17 +59,8 @@ function collectMachineConfig() {
   const cpus = os.cpus();
   if (cpus.length > 0) cfg.cpu = cpus[0].model.trim() + " (" + cpus.length + " cores)";
   try { cfg.codex_version = execFileSync("codex", ["--version"], { encoding: "utf-8", timeout: 5000 }).trim(); } catch {}
-  const pluginsDir = path.join(os.homedir(), ".claude", "plugins", "cache");
-  if (fs.existsSync(pluginsDir)) {
-    const skills = [];
-    for (const org of fs.readdirSync(pluginsDir)) {
-      const orgPath = path.join(pluginsDir, org);
-      if (fs.statSync(orgPath).isDirectory()) {
-        for (const plugin of fs.readdirSync(orgPath)) skills.push(plugin);
-      }
-    }
-    if (skills.length > 0) cfg.claude_skills = skills;
-  }
+  const skills = collectClaudeSkills();
+  if (skills.length > 0) cfg.claude_skills = skills;
   // Only send if config changed since last report
   const cfgJson = JSON.stringify(cfg);
   const cfgHash = crypto.createHash("sha256").update(cfgJson).digest("hex").slice(0, 16);
