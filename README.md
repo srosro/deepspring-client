@@ -207,7 +207,7 @@ DEMO_VIDEO_URL=https://www.youtube.com/watch?v=YiDcgyAn-88
 - **Old world (~1 min).** One task you used to do before AI. Spell out the friction: the manual steps, how long it took, the parts that made you dread it. Keep this short — the viewer needs enough context to feel the old pain, but not a full re-enactment.
 - **New world (~2 min).** The same task today. Show the prompt, the agent's output, the shipped result. Don't cut away from the screen — let people see the actual workflow land. The viewer should finish thinking "I want that."
 
-**Why 3 minutes?** It's a social contract, not a technical check: longer videos get skipped, because nobody owes a stranger more than three minutes to "get" their workflow. The discipline of cutting to 3 minutes is also what forces the demo to be actually good — if you can't show the transformation in that time, the transformation isn't as clear as you thought, and watching a longer cut won't fix it.
+**Why 3 minutes?** It's a social contract. The discipline of cutting to 3 minutes is also what forces the demo to be actually good — if you can't show the transformation in that time, the transformation isn't as clear as you thought, and watching a longer cut won't fix it.
 
 ## Appearing on the Leaderboard (HN Verification)
 
