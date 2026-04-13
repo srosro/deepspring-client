@@ -282,7 +282,7 @@ Both are merged and POSTed to the Tokenmaxxing server with your API key. Each re
 
 Enable it by setting `USE_AGENTSVIEW=true` in `.env`. The reporter then calls `agentsview usage daily --json --breakdown --agent <claude|codex>` for the local machine instead of running `ccusage` and reading the codex state file. Output is merged with any `EXTRA_CLAUDE_CONFIGS` remote dirs (still collected via `ccusage`) and with OpenAI platform usage, exactly as before.
 
-Requires the `agentsview` CLI on `PATH` or at one of `~/.local/bin/agentsview`, `/opt/homebrew/bin/agentsview`, `/usr/local/bin/agentsview`. Install instructions: https://www.agentsview.io/token-usage/
+Requires the `agentsview` CLI on `PATH` or at one of `~/.local/bin/agentsview`, `/opt/homebrew/bin/agentsview`, `/usr/local/bin/agentsview`. Install instructions: https://agentsview.io/quickstart/
 
 ## Logs
 
