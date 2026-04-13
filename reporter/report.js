@@ -200,7 +200,7 @@ async function main() {
   console.log(`  Using agentsview at ${agentsviewBin}`);
 
   // Local machine: agentsview's default data dir + default claude/codex dirs.
-  const { claudeDaily: localClaudeDaily, codexDaily } = collectAgentsviewUsage(sinceStr);
+  const { claudeDaily: localClaudeDaily, codexDaily } = collectAgentsviewUsage(agentsviewBin, sinceStr);
   console.log(`  Claude (local): ${localClaudeDaily.length} days`);
   console.log(`  Codex (local): ${codexDaily.length} days`);
 

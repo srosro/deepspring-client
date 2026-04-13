@@ -45,8 +45,7 @@ function queryAgent(bin, since, agent, noSync, timeoutMs, extraEnv) {
   return parseAgentsviewOutput(JSON.parse(raw), agent);
 }
 
-function collectAgentsviewUsage(sinceStr, timeoutMs = 180000) {
-  const bin = resolveAgentsview();
+function collectAgentsviewUsage(bin, sinceStr, timeoutMs = 180000) {
   const since = toIsoDate(sinceStr);
 
   // First call syncs on demand; second reuses the just-synced state.
