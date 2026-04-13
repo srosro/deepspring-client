@@ -36,10 +36,12 @@ function parseAgentsviewOutput(parsed, source) {
   return daily;
 }
 
-function queryAgent(bin, since, agent, noSync, timeoutMs) {
+function queryAgent(bin, since, agent, noSync, timeoutMs, extraEnv) {
   const args = ["usage", "daily", "--json", "--breakdown", "--agent", agent, "--since", since];
   if (noSync) args.push("--no-sync");
-  const raw = execFileSync(bin, args, { encoding: "utf-8", timeout: timeoutMs });
+  const execOpts = { encoding: "utf-8", timeout: timeoutMs };
+  if (extraEnv) execOpts.env = { ...process.env, ...extraEnv };
+  const raw = execFileSync(bin, args, execOpts);
   return parseAgentsviewOutput(JSON.parse(raw), agent);
 }
 
@@ -54,4 +56,19 @@ function collectAgentsviewUsage(sinceStr, timeoutMs = 180000) {
   return { claudeDaily, codexDaily };
 }
 
-module.exports = { collectAgentsviewUsage, parseAgentsviewOutput, toIsoDate, resolveAgentsview };
+// Single-agent (Claude) collection against an isolated agentsview data
+// dir + projects dir. Used for EXTRA_CLAUDE_CONFIGS entries where we
+// want per-remote-dir incremental sync without contaminating the local
+// machine's ~/.agentsview/sessions.db.
+function collectAgentsviewClaudeOnly(bin, sinceStr, env, timeoutMs = 180000) {
+  const since = toIsoDate(sinceStr);
+  return queryAgent(bin, since, "claude", false, timeoutMs, env);
+}
+
+module.exports = {
+  collectAgentsviewUsage,
+  collectAgentsviewClaudeOnly,
+  parseAgentsviewOutput,
+  toIsoDate,
+  resolveAgentsview,
+};
