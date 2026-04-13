@@ -278,11 +278,11 @@ Both are merged and POSTed to the Tokenmaxxing server with your API key. Each re
 
 ## Agentsview collector
 
-`agentsview` is an alternative usage collector that maintains its own sqlite synced from `~/.claude` and `~/.codex`. On large histories it's faster and less resource-intensive than walking every JSONL transcript with `ccusage`, because the sync is incremental and queries hit an indexed database rather than re-reading files.
+[`agentsview`](https://www.agentsview.io/token-usage/) ([repo](https://github.com/wesm/agentsview)) is an alternative usage collector that maintains its own sqlite synced from `~/.claude` and `~/.codex`. On large histories it's faster and less resource-intensive than walking every JSONL transcript with `ccusage`, because the sync is incremental and queries hit an indexed database rather than re-reading files.
 
 Enable it by setting `USE_AGENTSVIEW=true` in `.env`. The reporter then calls `agentsview usage daily --json --breakdown --agent <claude|codex>` for the local machine instead of running `ccusage` and reading the codex state file. Output is merged with any `EXTRA_CLAUDE_CONFIGS` remote dirs (still collected via `ccusage`) and with OpenAI platform usage, exactly as before.
 
-Requires the `agentsview` CLI on `PATH` or at one of `~/.local/bin/agentsview`, `/opt/homebrew/bin/agentsview`, `/usr/local/bin/agentsview`.
+Requires the `agentsview` CLI on `PATH` or at one of `~/.local/bin/agentsview`, `/opt/homebrew/bin/agentsview`, `/usr/local/bin/agentsview`. Install instructions: https://www.agentsview.io/token-usage/
 
 ## Logs
 
