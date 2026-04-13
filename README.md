@@ -66,6 +66,7 @@ cp .env.example .env
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills, MCP servers, hooks, CLAUDE.md stats, shell/editor) on your profile. No prompts, code, or keys are ever sent. |
 | `REPORT_DEV_STATS` | No | Set to `true` to share how you code — tool-call frequencies, session stats, cache efficiency, git outcome metrics (commits/LOC/PRs), and Cursor AI attribution. No file paths, prompts, or code are ever sent. See [Dev Stats](#dev-stats). |
 | `CCUSAGE_TIMEOUT_MS` | No | Milliseconds to wait for each `ccusage` run before giving up (default: `180000` = 3 min). Bump if you have a large `~/.claude/projects` tree and see `ccusage ETIMEDOUT`. |
+| `USE_AGENTSVIEW` | No | Set to `true` to collect local Claude + Codex usage via `agentsview usage daily` instead of `ccusage` + the codex state sqlite. See [Agentsview collector](#agentsview-collector). |
 
 ### 5. First run
 
@@ -274,6 +275,14 @@ The reporter collects token usage from two sources:
 - **Codex CLI** from `~/.codex/state_*.sqlite` (auto-detected, skipped if not present)
 
 Both are merged and POSTed to the Tokenmaxxing server with your API key. Each report replaces previous data for the same machine and date range, so re-syncs are safe and idempotent.
+
+## Agentsview collector
+
+`agentsview` is an alternative usage collector that maintains its own sqlite synced from `~/.claude` and `~/.codex`. On large histories it's faster and less resource-intensive than walking every JSONL transcript with `ccusage`, because the sync is incremental and queries hit an indexed database rather than re-reading files.
+
+Enable it by setting `USE_AGENTSVIEW=true` in `.env`. The reporter then calls `agentsview usage daily --json --breakdown --agent <claude|codex>` for the local machine instead of running `ccusage` and reading the codex state file. Output is merged with any `EXTRA_CLAUDE_CONFIGS` remote dirs (still collected via `ccusage`) and with OpenAI platform usage, exactly as before.
+
+Requires the `agentsview` CLI on `PATH` or at one of `~/.local/bin/agentsview`, `/opt/homebrew/bin/agentsview`, `/usr/local/bin/agentsview`.
 
 ## Logs
 

@@ -6,6 +6,7 @@ const path = require("node:path");
 const http = require("node:http");
 const https = require("node:https");
 const { collectCodexUsage, collectCodexStats } = require("./codex");
+const { collectAgentsviewUsage } = require("./agentsview");
 const { collectOpenAIUsage } = require("./openai");
 const { mergeDailyUsage } = require("./merge");
 const { parseExtraConfigs, aggregateClaudeResults, collectCcusage } = require("./claude-collect");
@@ -173,13 +174,30 @@ async function main() {
 
   console.log(`[${new Date().toISOString()}] Collecting ${REPORT_DAYS}d usage since ${sinceStr} for ${USERNAME} (team: ${TEAM})`);
 
-  // Collect Claude usage — once from the local ~/.claude, then once per
-  // EXTRA_CLAUDE_CONFIGS entry (CLAUDE_CONFIG_DIR pointed at a synced remote).
-  // We run ccusage separately per config dir rather than pointing ccusage at a
-  // comma-joined CLAUDE_CONFIG_DIR, because a single ccusage process over
-  // multi-machine data can OOM; separating keeps each run bounded.
-  const claudeResults = [collectCcusage(CCUSAGE, sinceStr, "local", {}, CCUSAGE_TIMEOUT_MS)];
+  // Primary local collection: by default, ccusage walks ~/.claude transcripts
+  // and the codex state sqlite is read directly. Set USE_AGENTSVIEW=true to
+  // route the local machine through the `agentsview usage daily` command
+  // instead — it maintains its own sqlite synced from ~/.claude and ~/.codex,
+  // which is faster and less resource-intensive on large histories.
+  // EXTRA_CLAUDE_CONFIGS still runs ccusage per remote dir either way, since
+  // agentsview has no equivalent for switching Claude config dirs.
+  const useAgentsview = process.env.USE_AGENTSVIEW === "true";
 
+  let localClaudeResult;
+  let codexDaily;
+  if (useAgentsview) {
+    const { claudeDaily: localClaude, codexDaily: av } = collectAgentsviewUsage(sinceStr);
+    console.log(`  Claude (agentsview): ${localClaude.length} days`);
+    console.log(`  Codex (agentsview): ${av.length} days`);
+    localClaudeResult = { daily: localClaude, err: null };
+    codexDaily = av;
+  } else {
+    localClaudeResult = collectCcusage(CCUSAGE, sinceStr, "local", {}, CCUSAGE_TIMEOUT_MS);
+    codexDaily = collectCodexUsage(sinceStr);
+    console.log(`  Codex: ${codexDaily.length} days`);
+  }
+
+  const claudeResults = [localClaudeResult];
   for (const configDir of parseExtraConfigs(EXTRA_CLAUDE_CONFIGS)) {
     const label = path.basename(configDir) || configDir;
     if (!fs.existsSync(path.join(configDir, "projects"))) {
@@ -199,9 +217,6 @@ async function main() {
 
   const { daily: claudeDaily, err: claudeErr } = aggregateClaudeResults(claudeResults);
   if (claudeErr) throw claudeErr;
-
-  const codexDaily = collectCodexUsage(sinceStr);
-  console.log(`  Codex: ${codexDaily.length} days`);
 
   // Optional — requires OPENAI_ADMIN_KEY. Covers API-key-authenticated usage
   // from platform.openai.com/usage. If your Codex is API-key-authed, leave
