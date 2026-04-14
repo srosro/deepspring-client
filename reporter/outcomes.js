@@ -45,7 +45,6 @@ function collectOutcomeStats(cwds, sinceDateStr) {
   for (const repo of repos) {
     const authorEmail = repoAuthorEmail(repo);
     if (!authorEmail) continue;
-    authoredRepos.add(repo);
     try {
       const log = execFileSync(
         "git",
@@ -54,9 +53,10 @@ function collectOutcomeStats(cwds, sinceDateStr) {
         { cwd: repo, encoding: "utf-8", timeout: 15000 },
       );
 
+      let repoCommits = 0;
       for (const line of log.split("\n")) {
         if (line === "COMMIT") {
-          totalCommits++;
+          repoCommits++;
           continue;
         }
         // " 3 files changed, 42 insertions(+), 10 deletions(-)"
@@ -66,6 +66,10 @@ function collectOutcomeStats(cwds, sinceDateStr) {
         if (filesMatch) totalFilesChanged += parseInt(filesMatch[1]);
         if (addMatch) totalAdded += parseInt(addMatch[1]);
         if (delMatch) totalRemoved += parseInt(delMatch[1]);
+      }
+      if (repoCommits > 0) {
+        totalCommits += repoCommits;
+        authoredRepos.add(repo);
       }
     } catch { continue; }
   }
