@@ -97,32 +97,100 @@ describe("parseAgentsviewOutput", () => {
 });
 
 describe("resolveAgentsview", () => {
-  it("returns null when no candidate path exists", () => {
+  // Isolate each case from the host's real agentsview install and any
+  // ambient AGENTSVIEW_BIN env var. Tests that need $PATH to find
+  // something set PATH explicitly; the default empty PATH makes
+  // `which agentsview` miss.
+  function withIsolatedEnv(fn) {
     const origHome = process.env.HOME;
+    const origPath = process.env.PATH;
+    const origBin = process.env.AGENTSVIEW_BIN;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-resolve-"));
     process.env.HOME = tmp;
+    process.env.PATH = "";
+    delete process.env.AGENTSVIEW_BIN;
     try {
+      return fn(tmp);
+    } finally {
+      process.env.HOME = origHome;
+      process.env.PATH = origPath;
+      if (origBin === undefined) delete process.env.AGENTSVIEW_BIN;
+      else process.env.AGENTSVIEW_BIN = origBin;
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  function writeExec(p, body = "#!/bin/sh\n") {
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, body);
+    fs.chmodSync(p, 0o755);
+  }
+
+  it("returns null when no candidate path exists", () => {
+    withIsolatedEnv(() => {
       const { resolveAgentsview } = require("../reporter/agentsview");
       assert.equal(resolveAgentsview(), null);
-    } finally {
-      process.env.HOME = origHome;
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
+    });
   });
 
-  it("returns the first existing candidate when one is present", () => {
-    const origHome = process.env.HOME;
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-resolve-"));
-    fs.mkdirSync(path.join(tmp, ".local", "bin"), { recursive: true });
-    const fake = path.join(tmp, ".local", "bin", "agentsview");
-    fs.writeFileSync(fake, "#!/bin/sh\n");
-    process.env.HOME = tmp;
-    try {
+  it("returns the first existing executable candidate", () => {
+    withIsolatedEnv((tmp) => {
+      const fake = path.join(tmp, ".local", "bin", "agentsview");
+      writeExec(fake);
       const { resolveAgentsview } = require("../reporter/agentsview");
       assert.equal(resolveAgentsview(), fake);
-    } finally {
-      process.env.HOME = origHome;
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
+    });
+  });
+
+  it("skips non-executable candidates", () => {
+    withIsolatedEnv((tmp) => {
+      const fake = path.join(tmp, ".local", "bin", "agentsview");
+      fs.mkdirSync(path.dirname(fake), { recursive: true });
+      fs.writeFileSync(fake, "#!/bin/sh\n");
+      fs.chmodSync(fake, 0o644); // not executable
+      const { resolveAgentsview } = require("../reporter/agentsview");
+      assert.equal(resolveAgentsview(), null);
+    });
+  });
+
+  it("skips candidates that are directories, not files", () => {
+    withIsolatedEnv((tmp) => {
+      fs.mkdirSync(path.join(tmp, ".local", "bin", "agentsview"), { recursive: true });
+      const { resolveAgentsview } = require("../reporter/agentsview");
+      assert.equal(resolveAgentsview(), null);
+    });
+  });
+
+  it("respects AGENTSVIEW_BIN override", () => {
+    withIsolatedEnv((tmp) => {
+      const override = path.join(tmp, "nix", "store", "agentsview");
+      writeExec(override);
+      const candidate = path.join(tmp, ".local", "bin", "agentsview");
+      writeExec(candidate);
+      process.env.AGENTSVIEW_BIN = override;
+      const { resolveAgentsview } = require("../reporter/agentsview");
+      assert.equal(resolveAgentsview(), override);
+    });
+  });
+
+  it("ignores AGENTSVIEW_BIN override when it points at nothing", () => {
+    withIsolatedEnv((tmp) => {
+      const candidate = path.join(tmp, ".local", "bin", "agentsview");
+      writeExec(candidate);
+      process.env.AGENTSVIEW_BIN = "/nonexistent/agentsview";
+      const { resolveAgentsview } = require("../reporter/agentsview");
+      assert.equal(resolveAgentsview(), candidate);
+    });
+  });
+
+  it("falls back to PATH when no hard-coded candidate exists", () => {
+    withIsolatedEnv((tmp) => {
+      const pathDir = path.join(tmp, "custom", "bin");
+      const fake = path.join(pathDir, "agentsview");
+      writeExec(fake);
+      process.env.PATH = `${pathDir}:/usr/bin:/bin`;
+      const { resolveAgentsview } = require("../reporter/agentsview");
+      assert.equal(resolveAgentsview(), fake);
+    });
   });
 });
