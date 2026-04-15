@@ -4,17 +4,50 @@ const { execSync } = require("node:child_process");
 const os = require("node:os");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const NODE_PATH = process.execPath;
 const REPORT_SCRIPT = path.join(PROJECT_ROOT, "reporter", "report.js");
 
-if (os.platform() === "darwin") {
-  installLaunchd();
-} else if (os.platform() === "linux") {
-  installSystemd();
-} else {
-  console.error(`Unsupported platform: ${os.platform()}`);
-  process.exit(1);
+// `process.execPath` points at the real on-disk node binary, which on Homebrew
+// is a versioned Cellar path like `/opt/homebrew/Cellar/node/25.8.1_1/bin/node`.
+// Baking that into a launchd plist is a ticking time bomb: the next
+// `brew upgrade node` deletes that cellar dir and the service starts failing
+// silently with dyld "Library not loaded" errors. Rewrite cellar paths to the
+// stable `<prefix>/bin/node` symlink that brew keeps pointing at the current
+// version. nvm has the same fragility but no equivalent stable symlink, so we
+// warn instead.
+function stableNodePath(execPath, { existsSync = fs.existsSync } = {}) {
+  const brewMatch = execPath.match(/^(.*)\/Cellar\/node\/[^/]+\/bin\/node$/);
+  if (brewMatch) {
+    const stable = path.join(brewMatch[1], "bin", "node");
+    if (existsSync(stable)) return stable;
+  }
+  return execPath;
 }
+
+function warnIfFragileNodePath(execPath) {
+  if (execPath.includes("/.nvm/versions/node/")) {
+    console.warn(
+      `Warning: installing against nvm node at ${execPath}. ` +
+      `The service will break on \`nvm install\`/\`nvm uninstall\` of this version — ` +
+      `re-run \`npm run install-service\` after nvm changes, or install with Homebrew node for stability.`
+    );
+  }
+}
+
+const NODE_PATH = stableNodePath(process.execPath);
+
+if (require.main === module) {
+  warnIfFragileNodePath(NODE_PATH);
+  if (os.platform() === "darwin") {
+    installLaunchd();
+  } else if (os.platform() === "linux") {
+    installSystemd();
+  } else {
+    console.error(`Unsupported platform: ${os.platform()}`);
+    process.exit(1);
+  }
+}
+
+module.exports = { stableNodePath };
 
 function installLaunchd() {
   const label = "com.token-tracking.reporter";
