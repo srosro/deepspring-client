@@ -180,8 +180,12 @@ describe("collectOutcomeStats", () => {
         "the sibling's unique commit must add exactly one");
       assert.equal(both.loc_added, single.loc_added + 2,
         "sibling-only.txt adds exactly 2 lines");
+      assert.equal(both.loc_removed, single.loc_removed,
+        "sibling commit has no deletions");
+      assert.equal(both.files_changed, single.files_changed + 1,
+        "sibling adds exactly one new file");
       assert.equal(both.repos_active, 2,
-        "both repos contribute at least one unique SHA, so both are active");
+        "sibling's unique commit gives it ≥1 new SHA, so it counts as active alongside tmpRepo");
     } finally {
       fs.rmSync(sibling, { recursive: true, force: true });
     }
