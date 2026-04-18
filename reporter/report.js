@@ -308,6 +308,13 @@ async function main() {
 
   const profileUrl = `${SERVER_URL}/user/${USERNAME}`;
   console.log(`  Profile: ${profileUrl}`);
+
+  if (!TOOLS) console.log(`  Set TOOLS in .env — which AI tools you use daily (e.g. superpowers,paperclip)`);
+  if (!PROJECTS) console.log(`  Set PROJECTS in .env — what you're spending tokens on (e.g. tkmx,plow.co)`);
+  if (!COMMUNITIES) console.log(`  Set COMMUNITIES in .env — which dev communities you're part of`);
+  if (!ABOUT) console.log(`  Set ABOUT in .env — a short description for your profile page`);
+  if (!DEMO_VIDEO_URL) console.log(`  Set DEMO_VIDEO_URL in .env — a 3-min demo of your AI workflow`);
+
   if (!HN_USERNAME) {
     console.log(`  Set HN_USERNAME in .env to unlock leaderboard visibility`);
   } else {
