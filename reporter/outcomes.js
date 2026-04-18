@@ -54,6 +54,9 @@ function collectOutcomeStats(cwds, sinceDateStr) {
   let totalFilesChanged = 0;
 
   const authoredRepos = new Set();
+  // Sibling checkouts of the same repo share merged commits. Dedupe by
+  // SHA across the whole call so each commit is counted at most once.
+  const seenShas = new Set();
 
   for (const repo of repos) {
     const authorEmail = repoAuthorEmail(repo);
@@ -68,17 +71,28 @@ function collectOutcomeStats(cwds, sinceDateStr) {
       const log = execFileSync(
         "git",
         ["log", `--since=${sinceDate}`, "--shortstat",
-         `--author=<${authorEmail}>`, "--format=format:COMMIT"],
+         `--author=<${authorEmail}>`, "--format=format:%H"],
         { cwd: repo, encoding: "utf-8", timeout: 15000, stdio: quietStdio },
       );
 
-      let repoCommits = 0;
+      let repoUniqueCommits = 0;
+      // True while parsing stats that belong to a SHA we haven't counted yet.
+      let countCurrent = false;
       for (const line of log.split("\n")) {
-        if (line === "COMMIT") {
-          repoCommits++;
+        // SHA lines are exactly 40 lowercase hex chars with no leading space.
+        // Shortstat lines start with a space (" 3 files changed, ..."), so
+        // they can't collide with this pattern.
+        if (/^[0-9a-f]{40}$/.test(line)) {
+          if (seenShas.has(line)) {
+            countCurrent = false;
+          } else {
+            seenShas.add(line);
+            repoUniqueCommits++;
+            countCurrent = true;
+          }
           continue;
         }
-        // " 3 files changed, 42 insertions(+), 10 deletions(-)"
+        if (!countCurrent) continue;
         const filesMatch = line.match(/(\d+) files? changed/);
         const addMatch = line.match(/(\d+) insertions?\(\+\)/);
         const delMatch = line.match(/(\d+) deletions?\(-\)/);
@@ -86,8 +100,8 @@ function collectOutcomeStats(cwds, sinceDateStr) {
         if (addMatch) totalAdded += parseInt(addMatch[1], 10);
         if (delMatch) totalRemoved += parseInt(delMatch[1], 10);
       }
-      if (repoCommits > 0) {
-        totalCommits += repoCommits;
+      if (repoUniqueCommits > 0) {
+        totalCommits += repoUniqueCommits;
         authoredRepos.add(repo);
       }
     } catch { continue; }
