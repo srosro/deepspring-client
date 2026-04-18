@@ -130,4 +130,34 @@ describe("collectOutcomeStats", () => {
     }
   });
 
+  it("dedupes commits and LOC across sibling clones with shared history", () => {
+    // Clone `tmpRepo` into a sibling checkout that shares the same two commits
+    // from the `before` hook. A naïve per-repo sum would double the LOC and
+    // commit count; SHA-based dedup should collapse them.
+    const sibling = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-outcomes-sibling-"));
+    try {
+      execFileSync("git", ["clone", tmpRepo, sibling], { stdio: "ignore" });
+      // Cloned repo inherits history but not local user.email; set it so
+      // repoAuthorEmail matches the original author.
+      execFileSync("git", ["config", "user.email", "test@test.com"], { cwd: sibling });
+      execFileSync("git", ["config", "user.name", "Test"], { cwd: sibling });
+
+      const single = collectOutcomeStats([tmpRepo], "20260101");
+      const both = collectOutcomeStats([tmpRepo, sibling], "20260101");
+
+      assert.equal(both.commits, single.commits,
+        "commits must not double when the same SHAs appear in a sibling");
+      assert.equal(both.loc_added, single.loc_added,
+        "loc_added must not double when the same SHAs appear in a sibling");
+      assert.equal(both.loc_removed, single.loc_removed,
+        "loc_removed must not double when the same SHAs appear in a sibling");
+      assert.equal(both.files_changed, single.files_changed,
+        "files_changed must not double when the same SHAs appear in a sibling");
+      assert.equal(both.repos_active, 1,
+        "a sibling that contributes no unique SHAs must not count as an active repo");
+    } finally {
+      fs.rmSync(sibling, { recursive: true, force: true });
+    }
+  });
+
 });
