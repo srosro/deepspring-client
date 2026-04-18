@@ -130,4 +130,65 @@ describe("collectOutcomeStats", () => {
     }
   });
 
+  it("dedupes commits and LOC across sibling clones with shared history", () => {
+    // Clone `tmpRepo` into a sibling checkout that shares the same two commits
+    // from the `before` hook. A naïve per-repo sum would double the LOC and
+    // commit count; SHA-based dedup should collapse them.
+    const sibling = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-outcomes-sibling-"));
+    try {
+      execFileSync("git", ["clone", tmpRepo, sibling], { stdio: "ignore" });
+      // Cloned repo inherits history but not local user.email; set it so
+      // repoAuthorEmail matches the original author.
+      execFileSync("git", ["config", "user.email", "test@test.com"], { cwd: sibling });
+      execFileSync("git", ["config", "user.name", "Test"], { cwd: sibling });
+
+      const single = collectOutcomeStats([tmpRepo], "20260101");
+      const both = collectOutcomeStats([tmpRepo, sibling], "20260101");
+
+      assert.equal(both.commits, single.commits,
+        "commits must not double when the same SHAs appear in a sibling");
+      assert.equal(both.loc_added, single.loc_added,
+        "loc_added must not double when the same SHAs appear in a sibling");
+      assert.equal(both.loc_removed, single.loc_removed,
+        "loc_removed must not double when the same SHAs appear in a sibling");
+      assert.equal(both.files_changed, single.files_changed,
+        "files_changed must not double when the same SHAs appear in a sibling");
+      assert.equal(both.repos_active, 1,
+        "a sibling that contributes no unique SHAs must not count as an active repo");
+    } finally {
+      fs.rmSync(sibling, { recursive: true, force: true });
+    }
+  });
+
+  it("counts sibling-unique commits once in addition to shared history", () => {
+    // Sibling shares tmpRepo's two commits, then adds one unique commit
+    // on a local branch. Result should be: shared commits counted once,
+    // unique commit counted once, both repos marked active.
+    const sibling = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-outcomes-sibling-uniq-"));
+    try {
+      execFileSync("git", ["clone", tmpRepo, sibling], { stdio: "ignore" });
+      execFileSync("git", ["config", "user.email", "test@test.com"], { cwd: sibling });
+      execFileSync("git", ["config", "user.name", "Test"], { cwd: sibling });
+      fs.writeFileSync(path.join(sibling, "sibling-only.txt"), "unique\nstuff\n");
+      execFileSync("git", ["add", "sibling-only.txt"], { cwd: sibling });
+      execFileSync("git", ["commit", "-m", "sibling unique"], { cwd: sibling });
+
+      const single = collectOutcomeStats([tmpRepo], "20260101");
+      const both = collectOutcomeStats([tmpRepo, sibling], "20260101");
+
+      assert.equal(both.commits, single.commits + 1,
+        "the sibling's unique commit must add exactly one");
+      assert.equal(both.loc_added, single.loc_added + 2,
+        "sibling-only.txt adds exactly 2 lines");
+      assert.equal(both.loc_removed, single.loc_removed,
+        "sibling commit has no deletions");
+      assert.equal(both.files_changed, single.files_changed + 1,
+        "sibling adds exactly one new file");
+      assert.equal(both.repos_active, 2,
+        "sibling's unique commit gives it ≥1 new SHA, so it counts as active alongside tmpRepo");
+    } finally {
+      fs.rmSync(sibling, { recursive: true, force: true });
+    }
+  });
+
 });
