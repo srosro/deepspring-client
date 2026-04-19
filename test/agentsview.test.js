@@ -194,3 +194,37 @@ describe("resolveAgentsview", () => {
     });
   });
 });
+
+describe("updateAgentsview", () => {
+  const { updateAgentsview } = require("../reporter/agentsview");
+
+  function writeScript(body) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-update-"));
+    const bin = path.join(tmp, "agentsview");
+    fs.writeFileSync(bin, body);
+    fs.chmodSync(bin, 0o755);
+    return { tmp, bin };
+  }
+
+  it("returns true when the binary exits 0", () => {
+    const { tmp, bin } = writeScript('#!/bin/sh\n[ "$1" = "update" ] && [ "$2" = "--yes" ] && echo ok && exit 0\nexit 2\n');
+    try {
+      assert.equal(updateAgentsview(bin), true);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("returns false when the binary exits non-zero (soft-fail)", () => {
+    const { tmp, bin } = writeScript('#!/bin/sh\necho "update failed" >&2\nexit 1\n');
+    try {
+      assert.equal(updateAgentsview(bin), false);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("returns false when the binary path doesn't exist", () => {
+    assert.equal(updateAgentsview("/nonexistent/agentsview"), false);
+  });
+});

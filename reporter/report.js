@@ -9,6 +9,7 @@ const {
   collectAgentsviewUsage,
   collectAgentsviewClaudeOnly,
   resolveAgentsview,
+  updateAgentsview,
 } = require("./agentsview");
 const { collectOpenAIUsage } = require("./openai");
 const { mergeDailyUsage } = require("./merge");
@@ -207,6 +208,10 @@ async function main() {
     process.exit(1);
   }
   console.log(`  Using agentsview at ${agentsviewBin}`);
+
+  // Self-update agentsview before collecting — reporters run unattended for
+  // months, and the server/client contract evolves. No-op when current.
+  updateAgentsview(agentsviewBin);
 
   // Local machine: agentsview's default data dir + default claude/codex dirs.
   const { claudeDaily: localClaudeDaily, codexDaily } = collectAgentsviewUsage(agentsviewBin, sinceStr);
