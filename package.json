@@ -6,7 +6,8 @@
     "report": "node reporter/report.js",
     "install-service": "node reporter/install.js",
     "uninstall-service": "node reporter/uninstall.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "dev-report": "bash scripts/dev-report.sh"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

@@ -1,3 +1,4 @@
 node_modules/
 .env
 .machine_config_hash
+.reporting-state.json
