@@ -38,24 +38,6 @@ function resolveAgentsview() {
   return null;
 }
 
-// Self-update the agentsview binary in place. No-op when already current
-// (<1s network check). Soft-fails so a broken update server, network
-// outage, or read-only install dir never blocks a report — the reporter
-// falls through and uses whatever version is installed.
-function updateAgentsview(bin, timeoutMs = 60000) {
-  try {
-    execFileSync(bin, ["update", "--yes"], {
-      stdio: "inherit",
-      timeout: timeoutMs,
-    });
-    return true;
-  } catch (err) {
-    const msg = err && err.message ? err.message : String(err);
-    console.error(`  agentsview update skipped: ${msg}`);
-    return false;
-  }
-}
-
 function toIsoDate(sinceStr) {
   return `${sinceStr.slice(0, 4)}-${sinceStr.slice(4, 6)}-${sinceStr.slice(6, 8)}`;
 }
@@ -123,5 +105,4 @@ module.exports = {
   parseAgentsviewOutput,
   toIsoDate,
   resolveAgentsview,
-  updateAgentsview,
 };
