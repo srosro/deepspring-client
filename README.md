@@ -90,7 +90,7 @@ cp .env.example .env
 | `REPORT_DAYS` | No | Days of history to report (default: `28`). See [Backfill & Optimization](#backfill--optimization) |
 | `REPORT_MACHINE_CONFIG` | No | Set to `true` to share machine info (OS, CPU, memory, installed skills, MCP servers, hooks, CLAUDE.md stats, shell/editor) on your profile. No prompts, code, or keys are ever sent. |
 | `REPORT_DEV_STATS` | No | Set to `true` to share how you code — tool-call frequencies, session stats, cache efficiency, git outcome metrics (commits/LOC/PRs), and Cursor AI attribution. No file paths, prompts, or code are ever sent. See [Dev Stats](#dev-stats). |
-| `REPORT_SESSION_STATS` | No | Defaults to `true` when `REPORT_DEV_STATS=true`. Shells out to `agentsview stats --format json` to collect cross-agent session analytics (portfolio, archetype, velocity, temporal patterns, cache economics). Set to `false` to opt out — on the next report the server will clear your stored session_stats blob. |
+| `REPORT_SESSION_STATS` | No | Defaults to `true` when `REPORT_DEV_STATS=true`. Shells out to `agentsview stats --format json` to collect cross-agent session analytics (portfolio, archetype, velocity, temporal patterns, cache economics). Set to `false` to opt out — on the next report the server will clear your stored session_stats blob. The opt-out marker is tracked per-checkout in `.reporting-state.json`, so if you flip the toggle in one sibling checkout the clear signal only fires from that checkout's reporter. |
 
 ### 5. First run
 

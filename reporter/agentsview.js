@@ -38,16 +38,13 @@ function resolveAgentsview() {
   return null;
 }
 
-// Capture the agentsview version string. Returns a clean git-describe-style
-// version ("0.23.0" at a release, "0.23.0-2-g1b484fb" between releases) or
-// null when the binary is missing / `--version` fails.
-//
-// Expected raw output:
+// Parses `agentsview --version` raw output like
 //   "agentsview v0.23.0-2-g1b484fb (commit 1b484fb, built 2026-04-19T00:00:00Z)"
-//
-// We strip the "agentsview " prefix, the leading "v", and the "(commit ...,
-// built ...)" tail so the wire value is compact and directly displayable.
-// The server's MIN-version gate extracts the leading X.Y.Z for comparison.
+// into the bare git-describe core ("0.23.0" / "0.23.0-2-g1b484fb"). The
+// server's MIN-version gate compares the leading X.Y.Z, so the wrapper
+// prefix and "(commit …, built …)" tail are dropped to keep the wire
+// value compact and directly displayable. Returns null if the binary is
+// missing or `--version` fails.
 function detectAgentsviewVersion(bin, timeoutMs = 5000) {
   if (!bin) return null;
   let raw;

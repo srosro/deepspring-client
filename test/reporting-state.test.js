@@ -1,10 +1,11 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 test("loadState returns defaults when file absent", () => {
-  const dir = fs.mkdtempSync("/tmp/tkmx-state-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-state-"));
   const filePath = path.join(dir, "state.json");
   const { loadState } = require("../reporter/reporting-state");
   const state = loadState(filePath);
@@ -12,7 +13,7 @@ test("loadState returns defaults when file absent", () => {
 });
 
 test("saveState and loadState roundtrip", () => {
-  const dir = fs.mkdtempSync("/tmp/tkmx-state-");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-state-"));
   const filePath = path.join(dir, "state.json");
   const { loadState, saveState } = require("../reporter/reporting-state");
   saveState(filePath, { dev_stats_on: true, session_stats_on: true });

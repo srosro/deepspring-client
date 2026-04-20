@@ -273,10 +273,12 @@ async function main() {
     demo_video_url: DEMO_VIDEO_URL,
     client_id: CLIENT_ID,
     client_version: CLIENT_VERSION,
-    agentsview_version: agentsviewVersion || "",
     report_days: REPORT_DAYS,
     data: mergedDaily,
   };
+  // Omit when null so the server's grandfathering path (no key = old client,
+  // don't freeze) still triggers on a missing/failed `agentsview --version`.
+  if (agentsviewVersion) body.agentsview_version = agentsviewVersion;
   const machineConfig = collectMachineConfig();
   if (machineConfig) body.machine_config = machineConfig;
 
@@ -287,8 +289,7 @@ async function main() {
                       && process.env.REPORT_DEV_STATS === "true",
   };
 
-  // Dev stats — behavioral data gated behind REPORT_DEV_STATS=true
-  if (process.env.REPORT_DEV_STATS === "true") {
+  if (currentState.dev_stats_on) {
     console.log("  Collecting dev stats...");
 
     const cursorStats = collectCursorStats(sinceStr);
