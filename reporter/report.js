@@ -18,6 +18,7 @@ const { collectConfigStack } = require("./config-stack");
 const { collectCursorStats } = require("./cursor");
 const { collectSessionStats } = require("./session-stats");
 const { loadState, saveState, computeTransitionMarkers } = require("./reporting-state");
+const { STATS_WINDOW_DAYS, formatSinceStr } = require("./window");
 
 const STATE_PATH = path.join(__dirname, "..", ".reporting-state.json");
 
@@ -174,13 +175,8 @@ function postUsage(payload) {
 
 async function main() {
   const REPORT_DAYS = parseInt(process.env.REPORT_DAYS) || 28;
-
-  const since = new Date();
-  since.setDate(since.getDate() - REPORT_DAYS);
-  const sinceStr =
-    since.getFullYear().toString() +
-    (since.getMonth() + 1).toString().padStart(2, "0") +
-    since.getDate().toString().padStart(2, "0");
+  const sinceStr = formatSinceStr(REPORT_DAYS);
+  const statsSinceStr = formatSinceStr(STATS_WINDOW_DAYS);
 
   console.log(`[${new Date().toISOString()}] Collecting ${REPORT_DAYS}d usage since ${sinceStr} for ${USERNAME} (team: ${TEAM})`);
 
@@ -292,7 +288,7 @@ async function main() {
   if (currentState.dev_stats_on) {
     console.log("  Collecting dev stats...");
 
-    const cursorStats = collectCursorStats(sinceStr);
+    const cursorStats = collectCursorStats(statsSinceStr);
     if (cursorStats) {
       body.cursor_stats = cursorStats;
       console.log(`  Cursor: ${cursorStats.scored_commits || 0} scored commits`);
@@ -302,9 +298,7 @@ async function main() {
       console.log("  Collecting session stats (agentsview)...");
       // GH_TOKEN / GITHUB_TOKEN are inherited via child process.env — not
       // forwarded on argv — to keep the token out of `ps`-visible args.
-      const ss = collectSessionStats({
-        sinceDays: Number(REPORT_DAYS) || 28,
-      });
+      const ss = collectSessionStats({ sinceDays: STATS_WINDOW_DAYS });
       if (ss) {
         body.session_stats = ss;
         console.log(`  Session stats: ${ss.totals?.sessions_all ?? "?"} sessions, schema v${ss.schema_version}`);
