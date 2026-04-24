@@ -16,9 +16,10 @@ const STATS_WINDOW_DAYS = 28;
 
 // YYYYMMDD for `n` days ago in local time. Matches the date format
 // agentsview / codex / openai collectors expect for day-aligned usage
-// queries.
-function formatSinceStr(days) {
-  const d = new Date();
+// queries. The `now` parameter exists for deterministic tests — callers
+// should not pass it in production.
+function formatSinceStr(days, now = new Date()) {
+  const d = new Date(now);
   d.setDate(d.getDate() - days);
   return (
     d.getFullYear().toString() +

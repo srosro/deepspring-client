@@ -147,7 +147,7 @@ If you're updating an existing install, refer to the config table above and add 
 | `PROJECTS=tkmx,plow.co` | Projects you're building. Shown as badges on your profile and leaderboard. |
 | `COMMUNITIES=bloomberg-ai-engineering,agentcribs-community` | Developer communities you're part of. Shown as badges on your profile and leaderboard. |
 | `ABOUT="..."` | Bio, config details, and links shown on your profile. Share your setup — blog posts, tweets, or videos where you've discussed your workflow. URLs are auto-linked. |
-| `REPORT_DAYS=1` | Only send the last day each cycle instead of 28. Recommended after your first sync. |
+| `REPORT_DAYS=1` | Only send the last day of new token-usage rows each cycle instead of 28. Session stats, Cursor stats, and other rolling-window aggregates always carry a fixed 28-day window and are unaffected. Recommended after your first sync. |
 | `DEMO_VIDEO_URL=https://www.youtube.com/watch?v=...` | YouTube demo video (**3 min or shorter**) embedded on your profile. Show before/after workflows — how you worked before AI tools vs. after. |
 | `HN_USERNAME=Sam_Odio` | Your Hacker News username. Required for leaderboard visibility — see [HN Verification](#appearing-on-the-leaderboard-hn-verification). |
 | `REPORT_DEV_STATS=true` | Shares how you code — tool frequencies, session stats, cache efficiency, git outcomes, Cursor attribution. See [Dev Stats](#dev-stats). |
@@ -191,9 +191,9 @@ By default the reporter sends 28 days of history. To backfill older data or opti
 npm run report
 ```
 
-**Optimize** — after your initial sync, change to `REPORT_DAYS=1` in `.env` so the background service only reports the last day each cycle instead of re-sending 28 days every 2 hours.
+**Optimize** — after your initial sync, change to `REPORT_DAYS=1` in `.env` so the background service only re-sends the last day of token-usage rows each cycle instead of 28 days every 2 hours. Session stats (agent portfolio, temporal patterns, streaks) and Cursor stats always ship their full 28-day window regardless — they're wholesale-replaced on the server, so a short window would scrub prior history.
 
-You can always do a manual full re-sync by temporarily setting `REPORT_DAYS=28` and running `npm run report`.
+You can always do a manual full re-sync of the token-usage rows by temporarily setting `REPORT_DAYS=28` and running `npm run report`.
 
 ## Multiple Machines
 
