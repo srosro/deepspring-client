@@ -412,22 +412,24 @@ echo '{"daily":[{"date":"2026-08-29","modelBreakdowns":[{"modelName":"gpt-5.6-so
 
   it("throws on strict sync errors without querying usage", () => {
     const cases = [
-      { name: "non-zero exit", syncBody: "echo boom >&2; exit 1", timeoutMs: 180000, errorPattern: /agentsview sync failed: boom/, logMayBeAbsent: false },
-      // The timeout case races the fake binary's own startup: the kill can
-      // land before /bin/sh reaches its first write, so on a loaded machine
-      // the log legitimately does not exist. Asserting an exact transcript
-      // there made the case fail about two runs in three for a reason the
-      // case does not care about.
-      { name: "timeout", syncBody: "exec sleep 30", timeoutMs: 1000, errorPattern: /agentsview sync failed: .*ETIMEDOUT/, logMayBeAbsent: true },
+      { name: "non-zero exit", syncBody: "echo boom >&2; exit 1", timeoutMs: 180000, errorPattern: /agentsview sync failed: boom/ },
+      { name: "timeout", syncBody: "exec sleep 30", timeoutMs: 1000, errorPattern: /agentsview sync failed: .*ETIMEDOUT/ },
     ];
     for (const testCase of cases) {
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tkmx-extra-sync-"));
       try {
         const calls = path.join(tmp, "calls.log");
         const bin = path.join(tmp, "fake-agentsview");
+        // The fake logs AFTER the sync branch, so the log records only a
+        // usage call — which is the whole claim. Logging first meant the
+        // timeout case raced the fake's own startup: the kill could land
+        // before /bin/sh reached its first write, and an exact-transcript
+        // assertion then failed about two runs in three over something the
+        // case does not care about. The thrown error already proves the
+        // sync ran.
         writeExec(bin, `#!/bin/sh
-echo "$*" >> "${calls}"
 if [ "$1" = "sync" ]; then ${testCase.syncBody}; fi
+echo "$*" >> "${calls}"
 echo '{"daily":[]}'
 `);
 
@@ -443,20 +445,7 @@ echo '{"daily":[]}'
           testCase.errorPattern,
           testCase.name,
         );
-        // What this case guarantees is that usage is never queried after a
-        // failed sync. That holds whether or not the fake got as far as
-        // logging its own invocation, so it is asserted directly; the exact
-        // transcript is still pinned where the fake is guaranteed to run.
-        const lines = fs.existsSync(calls)
-          ? fs.readFileSync(calls, "utf-8").trim().split("\n").filter(Boolean)
-          : [];
-        assert.ok(
-          !lines.some((line) => line.startsWith("usage")),
-          `${testCase.name}: usage must not run after a failed sync`,
-        );
-        if (!testCase.logMayBeAbsent) {
-          assert.deepEqual(lines, ["sync"], testCase.name);
-        }
+        assert.equal(fs.existsSync(calls), false, `${testCase.name}: usage must not run after a failed sync`);
       } finally {
         fs.rmSync(tmp, { recursive: true, force: true });
       }

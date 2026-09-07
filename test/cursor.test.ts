@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import Database from "better-sqlite3";
+import { openDatabase } from "../reporter/sqlite";
 
 import { collectCursorStats } from "../reporter/cursor";
 
@@ -18,7 +18,7 @@ describe("collectCursorStats", () => {
     fs.mkdirSync(cursorDir, { recursive: true });
     dbPath = path.join(cursorDir, "ai-code-tracking.db");
 
-    const db = new Database(dbPath);
+    const db = openDatabase(dbPath);
     db.exec(`
       CREATE TABLE scored_commits (
         commitHash TEXT NOT NULL,

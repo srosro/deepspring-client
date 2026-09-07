@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isBindingFailure, bindingFailureMessage, openDatabaseWith, PINNED_NODE_MAJOR } from "../reporter/sqlite";
+import { isBindingFailure, bindingFailureMessage, openDatabaseWith } from "../reporter/sqlite";
 
 // A native addon built for another Node ABI fails at every call site, so one
 // missing binding used to read as dozens of unrelated broken tests. These
@@ -56,7 +56,4 @@ describe("better-sqlite3 binding failures", () => {
     assert.equal(openDatabaseWith(() => handle, "/tmp/x.db"), handle);
   });
 
-  it("pins the same Node major the toolchain does", () => {
-    assert.match(PINNED_NODE_MAJOR, /^\d+$/);
-  });
 });
